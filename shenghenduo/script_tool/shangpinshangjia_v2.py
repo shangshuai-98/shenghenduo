@@ -18,7 +18,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from urllib.parse import unquote
 
 import time, random, re
-from script_tool.database import connect_mysql
+from shenghenduo.script_tool.database import connect_mysql
 
 
 def md5_encryption(data):
@@ -229,6 +229,8 @@ def get_douyin_goods(kw):
                     'commission': commission,
                 }
                 res_list.append(res)
+        else:
+            break
     if res_list:
         res_list = sorted(res_list, key=lambda x: x['bottom_price'])
         print(res_list)
