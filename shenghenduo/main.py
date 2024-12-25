@@ -19,7 +19,7 @@ def create_item(item: Item):
     return {"item_id": item.id, "item_name": item.name, "item_price": item.price}
 
 
-@app.get("/bottomMoney/{bottom_money_id}")
+@app.get("/lxy/bottomMoney/{bottom_money_id}")
 def get_test(bottom_money_id):
     res = get_goods_info(bottom_money_id)
     if res:
