@@ -18,7 +18,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from urllib.parse import unquote
 
 import time, random, re
-from shenghenduo.script_tool.database import connect_mysql
+from script_tool.database import connect_mysql
 
 
 def md5_encryption(data):
