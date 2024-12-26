@@ -59,7 +59,7 @@ def link_platform(user_url):
 def get_goods_info(bottom_money_id):
     sql = f'SELECT `name`, url, remark FROM fa_wanlshop_bottommoney WHERE id = {bottom_money_id}'
     data = connect_mysql(sql, type=1)
-    print(data)
+    # print(data)
     # data = [['取暖器', '6.97 y@T.LJ 07/23 fOk:/ 【抖音商城】https://v.douyin.com/CeiJAMAVf/ 钻石牌新款取暖器塔式暖风机全屋升温高热干衣立式取暖办公室两用长按复制此条消息，打开抖音搜索，查看商品详情！', '']]
     kw = ''
     user_url = data[0][1]

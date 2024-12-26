@@ -30,7 +30,7 @@ def get_test(bottom_money_id):
 # https://d.luffi.cn/#/?key=F12TlLyrFKa7q4tDMQ
 # https://luckin.hqyi.net/#/?code=aDWSvnTrVWYmBpNx7H
 # https://d.luffi.cn/#/?key=u45JcPg2inN7wY8QcN
-@app.post('/coffee/mealCode')
+@app.post('/lxy/coffee/mealCode')
 def get_coffee_meal_code(data: dict):
     print(data)
     sku = data.get('sku')
