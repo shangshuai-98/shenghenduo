@@ -13,6 +13,7 @@ import json
 import time
 import requests
 import pandas as pd
+from script_tool.database import connect_mysql
 
 
 
@@ -262,7 +263,7 @@ def get_luffi_product_id(deptId, token, product_name):
 def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
     token = get_token(code)
     # order_sku_list = ['热', '不另外加糖', '锡兰红茶']
-    order_sku_list = [v for k, v in sku.items()]
+    order_sku_list = sku.split(',')
     time.sleep(1)
     productId = get_luffi_product_id(deptId, token, product_name)
     # productId = 4732
@@ -351,6 +352,40 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
 #
 # codeInfo = luffi_down_order(code, deptId, product_name, sku, count)
 # print(codeInfo)
+
+
+def get_order(order_id):
+    sql = f'SELECT market_price, difference, title, number FROM fa_wanlshop_order_goods WHERE order_id = {order_id}'
+    data = connect_mysql(sql, type=1)
+
+    price = data[0][0]
+    sku = data[0][1]
+    product_name = data[0][2]
+    count = data[0][3]
+    # todo
+    code_url = 'https://d.luffi.cn/#/?key=F12TlLyrFKa7q4tDMQ'
+    deptId = '385361'
+    remarks = ''
+    result = ''
+
+    if 'luckin.hqyi' in code_url:
+        code = code_url.split('code=')[1]
+        result = luck_down_order(sku, count, code, deptId, product_name, price, remarks)
+    elif 'd.luffi' in code_url:
+        code = code_url.split('key=')[1]
+        result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
+
+    if result:
+        sql = f'UPDATE fa_wanlshop_order SET changecode = %s WHERE id = %s'
+        val = [tuple([result, order_id])]
+        connect_mysql(sql, val)
+        return True
+    else:
+        return False
+
+
+
+
 
 
 

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from models import Item
 from script_tool.shangpinshangjia_v2 import get_goods_info
 from script_tool.celery_worker import celery_app as celery_app
-from script_tool.ruixing_order import luck_down_order, luffi_down_order
+from script_tool.ruixing_order import get_order
 
 app = FastAPI()
 
@@ -33,19 +33,7 @@ def get_test(bottom_money_id):
 @app.post('/lxy/coffee/mealCode')
 def get_coffee_meal_code(data: dict):
     print(data)
-    sku = data.get('sku')
-    count = data.get('count')
-    code_url = data.get('code_url')
-    deptId = data.get('deptId')
-    product_name = data.get('product_name')
-    price = data.get('price')
-    remarks = data.get('remarks')
-    if 'luckin.hqyi' in code_url:
-        code = code_url.split('code=')[1]
-        result = luck_down_order(sku, count, code, deptId, product_name, price, remarks)
-    elif 'd.luffi':
-        code = code_url.split('key=')[1]
-        result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
+    result = get_order(data.get('order_id'))
     if result:
         return {"code":1, "msg": 'success', 'data': result}
     return {"code":2, "msg": 'fail', 'data': False}
