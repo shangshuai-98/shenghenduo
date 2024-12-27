@@ -22,9 +22,8 @@ def create_item(item: Item):
 @app.get("/lxy/bottomMoney/{bottom_money_id}")
 def get_test(bottom_money_id):
     res = get_goods_info(bottom_money_id)
-    if res:
+    if res == 'True':
         return {"code": 1, "msg": "商品上架成功", "time": int(time.time()), "data": res}
-
     return {"code": 2, "msg": "商品无法识别", "time": int(time.time()), "data": res}
 
 # https://d.luffi.cn/#/?key=F12TlLyrFKa7q4tDMQ
