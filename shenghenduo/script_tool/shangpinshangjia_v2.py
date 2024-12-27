@@ -143,13 +143,13 @@ def get_goods_info(bottom_money_id):
         bottommoney_val = [(goods_id, bottom_money_id)]
         connect_mysql(bottommoney_sql, bottommoney_val)
         print('商品识别成功')  # 上架商品
-        return True
+        return ''
     else:
         bottommoney_sql = 'UPDATE fa_wanlshop_bottommoney SET status = 4 WHERE id = %s'
         bottommoney_val = [(bottom_money_id,)]
         connect_mysql(bottommoney_sql, bottommoney_val)
         print('商品无法识别')
-        return False
+        return ''
 
 
 def get_goods(plat, kw):
