@@ -13,7 +13,8 @@
 import json, hashlib, base64
 
 import requests, pyperclip
-
+import jieba
+import jieba.analyse
 from decimal import Decimal, ROUND_HALF_UP
 from urllib.parse import unquote
 
@@ -26,6 +27,16 @@ def md5_encryption(data):
     md5.update(data.encode('utf-8'))  # 使用utf-8编码数据
     return md5.hexdigest()  # 返回加密后的十六进制字符串
 
+
+# 提取中心思想
+def extract_central_idea(text, topK=5):
+    # 为jieba设置停用词
+    jieba.analyse.set_stop_words('script_tool/stopwords.txt')
+    # 使用jieba提取关键词
+    keywords = jieba.analyse.extract_tags(text, topK=topK)
+    # 将关键词组合成句子作为中心思想
+    central_idea = ''.join(keywords)
+    return central_idea
 
 
 # 判断平台，提取url
@@ -78,6 +89,7 @@ def get_goods_info(bottom_money_id):
             # url = 'https://v.douyin.com/iUQ1E11y/ 【小R妈推荐 双瓶特惠】Optrex爱滴氏 双效润眼喷雾 人10ml*2 H'
             # url = 'https://v.douyin.com/iU28LmJf/ 【答菲】羽绒服清洁湿巾免水洗衣物去渍应急清洁去污不留痕便携小包'
             k_name = url.split(' ')[1]
+            k_name = extract_central_idea(k_name, 3)
             kw = {'k_name': k_name}
         except Exception as e:
             print('获取商品信息失败')
@@ -86,7 +98,11 @@ def get_goods_info(bottom_money_id):
         print('快手')
     elif plat == 1:  # 淘宝
         print('淘宝')
-
+        # url = 'https://e.tb.cn/h.T6GaCyg3hddqwvO?tk=KAqI3AJld5E CZ0015 「法丽兹蛇年曲奇礼盒巧克力味饼干零食糕点大礼包年礼亲戚春节送礼」'
+        # url = 'https://e.tb.cn/h.T6iJKmwmD59CN83?tk=3ALa3AJlZ2J CZ3456 「美的云朵M60cm超薄526零嵌入式冰箱家用法式双开四门双系统大容量」'
+        k_name = url.split(' ')[-1]
+        k_name = extract_central_idea(k_name, 3)
+        kw = {'k_name': k_name}
     elif plat == 3:  # 京东
         print('京东')
 

@@ -376,10 +376,10 @@ def get_order(order_id):
         result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
 
     if result:
-        sql = f'UPDATE fa_wanlshop_order SET changecode = %s WHERE id = %s'
-        val = [tuple([result, order_id])]
+        sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime =  WHERE id = %s'
+        val = [tuple([result, 2, int(time.time()), order_id])]
         connect_mysql(sql, val)
-        return True
+        return result
     else:
         return False
 
