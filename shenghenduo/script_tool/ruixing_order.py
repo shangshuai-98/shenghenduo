@@ -391,6 +391,7 @@ def get_order(order_id):
     count = data[0][7]
     # todo
     remarks = ''
+    code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
     result = ''
 
     if 'luckin.hqyi' in code_url:
@@ -399,10 +400,10 @@ def get_order(order_id):
     elif 'd.luffi' in code_url:
         code = code_url.split('key=')[1]
         result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
-
+    print(result)
     if result:
-        sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime = %s WHERE id = %s'
-        val = [tuple([json.dumps(result), 2, int(time.time()), order_id])]
+        sql = f'UPDATE fa_wanlshop_order SET couponcode = %s, changecode = %s, couponstate = %s, coupontime = %s WHERE id = %s'
+        val = [tuple([code_url, json.dumps(result), 2, int(time.time()), order_id])]
         connect_mysql(sql, val)
         return result
     else:
