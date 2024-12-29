@@ -19,26 +19,26 @@ from script_tool.database import connect_mysql
 
 
 def request_from(url, method, payload=None, headers=None):
-    payload = {}
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-        'Accept': '*/*',
-        'Host': 'luffi.cn:8443',
-        'Connection': 'keep-alive'
-    }
+    if not payload:
+        payload = {}
+    if not headers:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+            'Accept': '*/*',
+            'Host': 'luffi.cn:8443',
+            'Connection': 'keep-alive'
+        }
     response = requests.request(method, url, headers=headers, data=payload)
     return response
 
 
-def down_order(code, deptId, productDataList, remarks):
+def down_order(code, deptData, productDataList, remarks):
 
     url = "https://kmapi.hqyi.net/LuckinCoffee/api/creatOrderTask"
 
     payload = json.dumps({
     "code": code,
-    "deptData": {
-        "deptId": deptId
-    },
+    "deptData": deptData,
     "productDataList": productDataList,
     "remark": remarks
     })
@@ -55,8 +55,8 @@ def down_order(code, deptId, productDataList, remarks):
     print(response.text)
     # {"code": 0, "message": "成功", "data": {"oid": "1870408939511169024"}, "error": "null"}
     oid = json.loads(response.text).get('data').get('oid')
-    # oid = 1870408939511169024
-    print(oid)
+    # oid = 1872937873159196672
+    # print(oid)
 
     for _ in range(300):
         url = f"https://kmapi.hqyi.net/LuckinCoffee/api/getOrderTaskInfo?code={code}&oid={oid}"
@@ -76,11 +76,17 @@ def down_order(code, deptId, productDataList, remarks):
             return takeMealCodeInfo
 
 
-def luck_down_order(sku, count, code, deptId, product_name, price, remarks):
+def luck_down_order(sku, count, code, deptId, product_name, price, remarks, city_id, store_name):
     # 瑞幸下单
-    order_sku_list = [v for k,v in sku.items()]
+    if '杯' in sku:
+        if 'oz' in sku:
+            order_sku_list = sku.split(',')
+        else:
+            order_sku_list = [sk for sk in sku.split(',') if '杯' not in sk]
+    else:
+        order_sku_list = sku.split(',')
     productId = get_store_menu(code, deptId, product_name)
-    print(productId)
+    # print(productId)
 
     url = f"https://kmapi.hqyi.net/LuckinCoffee/api/getProductDetail?deptId={deptId}&productId={productId}"
     print(url)
@@ -107,12 +113,22 @@ def luck_down_order(sku, count, code, deptId, product_name, price, remarks):
         xxx = 0
         for sku_k, sku_v in skuSaleAttrValue.items():
             print(sku_v)
-            for i in order_sku_list:  # ['热', '不另外加糖', '锡兰红茶']
-                if i in sku_v:
-                    xxx += 1
+            if sku_v[0] in order_sku_list:
+                xxx += 1
         if xxx == len(order_sku_list):
-            productDataList = [{"initialPrice": price, "productId": productId, "skuCode": sku.get('skuCode'), "count": count}]
-            takeMealCodeInfo = down_order(code, deptId, productDataList, remarks)
+            productData = response_text.get('data')
+            productData['skuCode'] = sku.get('skuCode')
+            productData['count'] = int(count)
+            productData['newprice'] = price
+            productDataList = [productData]
+            # productDataList = [{"initialPrice": price, "productId": int(productId), "skuCode": sku.get('skuCode'), "count": int(count)}]
+            url = f'https://kmapi.hqyi.net/LuckinCoffee/api/getShopList?cityId={city_id}&search={store_name}'
+            dept_data = requests.request("GET", url, headers=headers, data=payload)
+            dept_data_text = json.loads(dept_data.text)
+            otherShopList = dept_data_text.get('data').get('otherShopList')
+            deptData = otherShopList[0]
+            deptData['cityId'] = city_id
+            takeMealCodeInfo = down_order(code, deptData, productDataList, remarks)
             return takeMealCodeInfo
     # print(sku_list)
 
@@ -263,7 +279,13 @@ def get_luffi_product_id(deptId, token, product_name):
 def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
     token = get_token(code)
     # order_sku_list = ['热', '不另外加糖', '锡兰红茶']
-    order_sku_list = sku.split(',')
+    if '杯' in sku:
+        if 'oz' in sku:
+            order_sku_list = sku.split(',')
+        else:
+            order_sku_list = [sk for sk in sku.split(',') if '杯' not in sk]
+    else:
+        order_sku_list = sku.split(',')
     time.sleep(1)
     productId = get_luffi_product_id(deptId, token, product_name)
     # productId = 4732
@@ -280,9 +302,8 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
         xxx = 0
         for sku_k, sku_v in skuSaleAttrValue.items():
             # print(sku_v)
-            for i in order_sku_list:  # ['热', '不另外加糖', '锡兰红茶']
-                if i in sku_v:
-                    xxx += 1
+            if sku_v[0] in order_sku_list:
+                xxx += 1
         if xxx == len(order_sku_list):
 
             url = "https://luffi.cn:8443/api/third/OrderCreate"
@@ -355,39 +376,97 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
 
 
 def get_order(order_id):
-    sql = f'SELECT market_price, difference, title, number FROM fa_wanlshop_order_goods WHERE order_id = {order_id}'
+    sql = f'SELECT fa_wanlshop_order.couponcode, fa_wanlshop_order.store_id, fa_wanlshop_order.city_id, fa_wanlshop_order.store_name, fa_wanlshop_order_goods.market_price, fa_wanlshop_order_goods.difference, fa_wanlshop_order_goods.title, fa_wanlshop_order_goods.number FROM fa_wanlshop_order INNER JOIN fa_wanlshop_order_goods on fa_wanlshop_order.id = fa_wanlshop_order_goods.order_id WHERE fa_wanlshop_order.id = {order_id}'
     data = connect_mysql(sql, type=1)
-
-    price = data[0][0]
-    sku = data[0][1]
-    product_name = data[0][2]
-    count = data[0][3]
+    # data = (('https://luckin.hqyi.net/#/?code=aSjBR0kpdxAsm4Qs8s', 385361, '26.00', '热,不另外加糖,大杯 16oz,含轻咖', '轻轻茉莉', 1),)
+    # data = (('https://luckin.hqyi.net/#/?code=JBk4BJBbBupeqpNTlf', 385361, '29.00', '冰,标准甜', '生椰拿铁', 1),)
+    print(data)
+    code_url = data[0][0]
+    deptId = data[0][1]
+    city_id = data[0][2]
+    store_name = data[0][3]
+    price = float(data[0][4])
+    sku = data[0][5]
+    product_name = data[0][6]
+    count = data[0][7]
     # todo
-    code_url = 'https://d.luffi.cn/#/?key=F12TlLyrFKa7q4tDMQ'
-    deptId = '385361'
     remarks = ''
     result = ''
 
     if 'luckin.hqyi' in code_url:
         code = code_url.split('code=')[1]
-        result = luck_down_order(sku, count, code, deptId, product_name, price, remarks)
+        result = luck_down_order(sku, count, code, deptId, product_name, price, remarks, city_id, store_name)
     elif 'd.luffi' in code_url:
         code = code_url.split('key=')[1]
         result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
 
     if result:
-        sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime =  WHERE id = %s'
-        val = [tuple([result, 2, int(time.time()), order_id])]
+        sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime = %s WHERE id = %s'
+        val = [tuple([json.dumps(result), 2, int(time.time()), order_id])]
         connect_mysql(sql, val)
         return result
+    else:
+        return False
+# get_order(829)
+
+# 快发平台买优惠券
+def kf_get_coupon_goods(params):
+    print(params)
+    face_price = params.get('face_price')
+    order_id = params.get('order_id')
+    url = "https://test.haomachina.cn/api/Coupon/getGoods"
+    payload = json.dumps({
+        "page": 1,
+        "goodsType": 1,
+        "type": 2,
+        "word": f'{face_price}元'
+    })
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+        'Host': 'test.haomachina.cn',
+        'Connection': 'keep-alive'
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+
+    # print(json.loads(response.text))
+    response_text = json.loads(response.text)
+    # response_text = {'allCount': 1, 'allPage': 1, 'code': 1000, 'data': [{'id': 2257, 'number': 1836, 'name': '①号货源 23元面值  瑞幸咖啡 ', 'price': 0, 'money': 8.13, 'type': 1, 'day': 0, 'keyId': 8, 'status': 1, 'multiple': 1, 'isRepeat': 0, 'skuType': 0}], 'msg': '获取成功'}
+    data = response_text.get('data')
+    if data:
+        pwd = ''
+        for i in data:
+            if int(i.get('status')) != 1:
+                continue
+            if '瑞幸' in i.get('name') and str(face_price) in i.get('name'):
+                print(i.get('id'))
+                url = "https://guchi.haomachina.cn/api/Coupon/addOrder"
+                payload = json.dumps({
+                    "id": i.get('id'),
+                    "count": 1,
+                    "payType": 0
+                })
+                # print(payload)
+                response = requests.request("POST", url, headers=headers, data=payload)
+                response_text = json.loads(response.text)
+                # response_text = {'cards': [{'number': '', 'pwd': 'https://luckin.hqyi.net/#/?code=JBk4BJBbBupeqpNTlf', 'time': '', 'gifts': ''}], 'code': 1000, 'id': 155364, 'msg': '购买成功', 'number': '20241228151832574'}
+                # print(response_text)
+                cards = response_text.get('cards')
+                pwd = cards[0].get('pwd')
+                print(pwd)
+                break
+        if pwd:
+            return pwd
+        else:
+            return False
     else:
         return False
 
 
 
 
-
-
+# kf_get_coupon_goods(29)
 
 
 

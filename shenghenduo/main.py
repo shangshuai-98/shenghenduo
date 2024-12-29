@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from models import Item
 from script_tool.shangpinshangjia_v2 import get_goods_info
 from script_tool.celery_worker import celery_app as celery_app
-from script_tool.ruixing_order import get_order
+from script_tool.ruixing_order import get_order, kf_get_coupon_goods
 
 app = FastAPI()
 
@@ -33,6 +33,16 @@ def get_test(bottom_money_id):
 def get_coffee_meal_code(data: dict):
     print(data)
     result = get_order(data.get('order_id'))
+    if result:
+        return {"code":1, "msg": 'success', 'data': result}
+    return {"code":2, "msg": 'fail', 'data': False}
+
+
+@app.post('/lxy/kf_coupon')
+def get_coffee_meal_code(params: dict):
+    print(params)
+    # face_price = params.get('face_price')
+    result = kf_get_coupon_goods(params)
     if result:
         return {"code":1, "msg": 'success', 'data': result}
     return {"code":2, "msg": 'fail', 'data': False}

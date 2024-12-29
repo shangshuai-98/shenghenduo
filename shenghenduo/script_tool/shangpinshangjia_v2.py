@@ -178,7 +178,9 @@ def get_goods(plat, kw):
     elif plat == 4:  # 快手
         print('快手')
     elif plat == 1:  # 淘宝
-        print('淘宝')
+        # print('淘宝')
+        goods_list = get_taobao_goods(kw)
+        return goods_list
     elif plat == 3:  # 京东
         print('京东')
 
@@ -298,13 +300,63 @@ def get_dy_commission_rate(price, commission):
 # '20000M大容量快充充电宝自带四线迷你便携10000M手机通用毫安'
 # get_douyin_goods({'k_name': '充电宝'})
 
+def get_taobao_goods(kw):
+    k_name = kw.get('k_name')
+    res_list = []
+    for page in range(1, 2):
+        url = f"https://dtkapi.ffquan.cn/go_getway/proxy/search-v2?platform=1&page={page}&px=zh&version=2&kw={k_name}&api_v=1&flow_identifier=normal"
+
+        payload = {}
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'Accept': '*/*',
+            'Host': 'dtkapi.ffquan.cn',
+            'Connection': 'keep-alive',
+        }
+
+        # response = requests.request("GET", url, headers=headers, data=payload)
+        # print(json.loads(response.text))
+        response_text = {'cache': False, 'code': 1, 'data': {'category_range_price': None, 'search': {'bi_k': 'retry', 'bi_v': '1', 'category_name': '', 'goodsid': '', 'list': [{'activity_end_time': '2025-01-31 23:59:59', 'activity_price_tag': '', 'activity_start_time': '2024-12-01 00:00:01', 'activity_type': '3', 'add_time': '2024-12-26 17:54:01', 'avgday7_plus_today': '0.00', 'brand_id': '119069', 'brand_name': '趣多多', 'bybt_fee': '0.00', 'cate_lowest_price': '', 'category_name': '曲奇饼干', 'cid': '6', 'comment': '0', 'commission_rate': '8.50', 'commission_type': '3', 'coupon_amount': '5.00', 'coupon_condition': '5.01', 'coupon_end_time': '2025-01-03 23:59:59', 'coupon_end_time_stamp': 1735919999, 'coupon_id': 'abe3e1ae924a4f17bccf9f8ccf72080e', 'coupon_link': 'https://uland.taobao.com/quan/detail?sellerId=144185701108507162&activityId=abe3e1ae924a4f17bccf9f8ccf72080e', 'coupon_num': '99999', 'coupon_over': '1', 'coupon_start_time': '2024-12-27 00:00:00', 'cut': '0', 'cut_price': '0.00', 'd_title': '趣多多豆豆曲奇缤纷口味新年礼盒24包*384g', 'daily_tk_total': '2', 'deposit': '', 'direct_commission': '0.00', 'direct_commission_type': '1', 'discount_cut': '0', 'discount_full': '0', 'divisor': '1', 'flagship_store': '0', 'freeship_remote_district': '0', 'fresh': '1', 'goods_sign': 'jjjejQMU0tJZJdvjjnHBeJhJte-bXG76geHGP7jVrvMiZb', 'goods_unit': '', 'goodsid': 'jjjejQMU0tJZJdvjjnHBeJhJte-bXG76geHGP7jVrvMiZb', 'gray_type': [], 'has_coupon': '1', 'hot_push': '2', 'id': '44592050', 'is_88vip': '1', 'is_brand_business': '0', 'is_buydance_goods': '0', 'is_buydance_top': '0', 'is_chaoshi': '1', 'is_choice': '1', 'is_delete': '0', 'is_editor_recommend': '0', 'is_flagship': '1', 'is_goldseller': '0', 'is_gray': '0', 'is_haitao': '0', 'is_high_com': '0', 'is_online': '1', 'is_online_brand': '0', 'is_pure_push': '0', 'is_recommend_goods': 0, 'is_red_shop': '0', 'is_sample': '0', 'is_subdivision': '0', 'is_tmall': '1', 'is_top': 0, 'kol_num': '0', 'lowest': '0', 'lowest_day': '0', 'main_pic': 'https://img.alicdn.com/i1/6000000002991/O1CN01emMLqy1XxvemAXGPH_!!6000000002991-0-at.jpg', 'mao_chao_return': '0.00', 'market_group': [], 'market_img': [], 'max_sales_time': '', 'min_unit_price_by_cate': '0', 'nearly_min_price': '', 'official_fee': '0.00', 'original_price': '44.90', 'price': '39.90', 'promotion_group_num': '0', 'pure_push_switch': '0', 'rank_num': '0', 'red_packet': '0', 'reward': '0.00', 'sales': '3', 'sales_2h': '0', 'sales_daily': '1', 'search_goods_rate': 0, 'seckill_fee': '0.00', 'selection_users_recommend_num': '0', 'seller_id': '144185701108507162', 'sentiment': '0.43', 'server_tag': ['假一赔十', '7天无理由退换', '春节', '破损包退', '极速退款', '30天放心退', '上门取退', '实惠货盘'], 'service_percent': '0.00', 'service_score': '4.88', 'ship_score': '4.88', 'shop_level': '20', 'shop_name': '天猫超市', 'similar_goods': 0, 'special': '', 'special_content': '', 'special_text': [], 'start_time': '2024-12-27 00:00:00', 'start_time_stamp': 1735228800, 'sub_title': '趣多多豆豆曲奇缤纷口味新年礼盒24包*384g', 'subdivision_id': '0', 'subdivision_name': '', 'subdivision_rank': '0', 'subsidy_rate': '0.00', 'tag_id': [16], 'taobao_cate_id': '17835', 'team_name': '冰橙-珠穆朗玛', 'title': '趣多多豆豆软曲奇缤纷口味新年礼盒384g整箱24包饼干零食新年礼物', 'tk_zs_id': '48224298', 'top_days': '0', 'topn_quantity': '0', 'topn_rate': '', 'topn_total_count': '0', 'trans_device_day8': '0', 'unique_activity': '', 'unit_price': '0', 'users_recommend_num': '0', 'yunfeixian': '0', 'zs_uid': '1235027'}, {'activity_end_time': '2025-01-31 23:59:59', 'activity_price_tag': '', 'activity_start_time': '2024-12-01 00:00:01', 'activity_type': '3', 'add_time': '2024-12-24 11:53:01', 'avgday7_plus_today': '1.00', 'brand_id': '139041082', 'brand_name': '皇冠', 'bybt_fee': '0.00', 'cate_lowest_price': '比同类曲奇饼干低6.02元', 'category_name': '曲奇饼干', 'cid': '6', 'comment': '0', 'commission_rate': '4.25', 'commission_type': '3', 'coupon_amount': '0.00', 'coupon_condition': '', 'coupon_end_time': '2024-12-31 23:59:59', 'coupon_end_time_stamp': 1735660799, 'coupon_id': '', 'coupon_link': '', 'coupon_num': '1', 'coupon_over': '0', 'coupon_start_time': '2024-12-24 11:52:49', 'cut': '0', 'cut_price': '0.00', 'd_title': '【皇冠丹麦】曲奇饼干681g*1年货礼盒装', 'daily_tk_total': '0', 'deposit': '', 'direct_commission': '0.00', 'direct_commission_type': '1', 'discount_cut': '0', 'discount_full': '0', 'divisor': '1', 'flagship_store': '0', 'freeship_remote_district': '0', 'fresh': '1', 'goods_sign': 'JkQZJaiRtqAyNgVG0IXKZcvta-eQGMq6ACGVVZPm0xH93', 'goods_unit': '', 'goodsid': 'JkQZJaiRtqAyNgVG0IXKZcvta-eQGMq6ACGVVZPm0xH93', 'gray_type': [], 'has_coupon': '0', 'hot_push': '0', 'id': '44580410', 'is_88vip': '1', 'is_brand_business': '0', 'is_buydance_goods': '0', 'is_buydance_top': '0', 'is_chaoshi': '1', 'is_choice': '1', 'is_delete': '0', 'is_editor_recommend': '0', 'is_flagship': '1', 'is_goldseller': '0', 'is_gray': '0', 'is_haitao': '0', 'is_high_com': '0', 'is_online': '1', 'is_online_brand': '1', 'is_pure_push': '0', 'is_recommend_goods': 0, 'is_red_shop': '0', 'is_sample': '0', 'is_subdivision': '0', 'is_tmall': '1', 'is_top': 0, 'kol_num': '1', 'lowest': '0', 'lowest_day': '0', 'main_pic': 'https://img.alicdn.com/i4/6000000005528/O1CN01QBqlJC1qhsKd1sYua_!!6000000005528-0-at.jpg', 'mao_chao_return': '0.00', 'market_group': [], 'market_img': [], 'max_sales_time': '', 'min_unit_price_by_cate': '0', 'nearly_min_price': '', 'official_fee': '0.00', 'original_price': '64.30', 'price': '64.30', 'promotion_group_num': '0', 'pure_push_switch': '0', 'rank_num': '0', 'red_packet': '0', 'reward': '0.00', 'sales': '15', 'sales_2h': '0', 'sales_daily': '0', 'search_goods_rate': 0, 'seckill_fee': '0.00', 'selection_users_recommend_num': '0', 'seller_id': '144185701108507162', 'sentiment': '-57.63', 'server_tag': ['极速退款', '30天放心退', '上门取退', '假一赔十', '7天无理由退换', '实惠货盘', '破损包退', '春节'], 'service_percent': '0.00', 'service_score': '4.88', 'ship_score': '4.88', 'shop_level': '20', 'shop_name': '天猫超市', 'similar_goods': 0, 'special': '', 'special_content': '', 'special_text': [], 'start_time': '2024-12-24 11:53:02', 'start_time_stamp': 1735012382, 'sub_title': '【皇冠丹麦】曲奇饼干681g*1年货礼盒装', 'subdivision_id': '0', 'subdivision_name': '', 'subdivision_rank': '0', 'subsidy_rate': '0.00', 'tag_id': [16], 'taobao_cate_id': '17835', 'team_name': '打工人好物采集', 'title': 'danisa皇冠丹麦进口曲奇饼干681g*1盒零食送礼盒新年礼物年货礼包', 'tk_zs_id': '48212484', 'top_days': '0', 'topn_quantity': '0', 'topn_rate': '', 'topn_total_count': '0', 'trans_device_day8': '2', 'unique_activity': '', 'unit_price': '0', 'users_recommend_num': '0', 'yunfeixian': '0', 'zs_uid': '413299'}, {'activity_end_time': '', 'activity_price_tag': '比双12低9元', 'activity_start_time': '', 'activity_type': '1', 'add_time': '2024-12-26 16:22:01', 'avgday7_plus_today': '0.00', 'brand_id': '16739791067', 'brand_name': '榛好季', 'bybt_fee': '0.00', 'cate_lowest_price': '', 'category_name': '坚果礼盒', 'cid': '6', 'comment': '0', 'commission_rate': '20.01', 'commission_type': '3', 'coupon_amount': '6.00', 'coupon_condition': '29', 'coupon_end_time': '2024-12-29 23:59:59', 'coupon_end_time_stamp': 1735487999, 'coupon_id': '2b4654fda93a44eabab911d6aa0bbe51', 'coupon_link': 'https://uland.taobao.com/quan/detail?sellerId=4801013124909192891&activityId=2b4654fda93a44eabab911d6aa0bbe51', 'coupon_num': '99998', 'coupon_over': '2', 'coupon_start_time': '2024-12-27 00:00:00', 'cut': '0', 'cut_price': '1.00', 'd_title': '榛好季礼盒曲奇华夫饼干500gx2盒', 'daily_tk_total': '1', 'deposit': '', 'direct_commission': '0.00', 'direct_commission_type': '1', 'discount_cut': '0', 'discount_full': '0', 'divisor': '1', 'flagship_store': '0', 'freeship_remote_district': '1', 'fresh': '0', 'goods_sign': '5kdr0Y0CxtyjyWmo5mu7dYCMtV-GKGOWR8cqPmXWDkZhZp', 'goods_unit': '', 'goodsid': '5kdr0Y0CxtyjyWmo5mu7dYCMtV-GKGOWR8cqPmXWDkZhZp', 'gray_type': [], 'has_coupon': '1', 'hot_push': '1', 'id': '44591247', 'is_88vip': '0', 'is_brand_business': '0', 'is_buydance_goods': '0', 'is_buydance_top': '0', 'is_chaoshi': '0', 'is_choice': '1', 'is_delete': '0', 'is_editor_recommend': '0', 'is_flagship': '0', 'is_goldseller': '0', 'is_gray': '0', 'is_haitao': '0', 'is_high_com': '0', 'is_online': '1', 'is_online_brand': '0', 'is_pure_push': '0', 'is_recommend_goods': 0, 'is_red_shop': '1', 'is_sample': '0', 'is_subdivision': '0', 'is_tmall': '1', 'is_top': 0, 'kol_num': '0', 'lowest': '1', 'lowest_day': '22', 'main_pic': 'https://img.alicdn.com/imgextra/i1/2256668114/O1CN01BxmIFB29oGhXE3J8G_!!2256668114.jpg', 'mao_chao_return': '0.00', 'market_group': [], 'market_img': [], 'max_sales_time': '', 'min_unit_price_by_cate': '0', 'nearly_min_price': '', 'official_fee': '0.00', 'original_price': '29.90', 'price': '23.90', 'promotion_group_num': '0', 'pure_push_switch': '0', 'rank_num': '0', 'red_packet': '0', 'reward': '0.00', 'sales': '6', 'sales_2h': '0', 'sales_daily': '0', 'search_goods_rate': 0, 'seckill_fee': '0.00', 'selection_users_recommend_num': '0', 'seller_id': '4801013124909192891', 'sentiment': '6.44', 'server_tag': [''], 'service_percent': '1.00', 'service_score': '4.84', 'ship_score': '4.85', 'shop_level': '12', 'shop_name': '惠通天下食品专营店', 'similar_goods': 0, 'special': '', 'special_content': '', 'special_text': [], 'start_time': '2024-12-27 00:00:00', 'start_time_stamp': 1735228800, 'sub_title': '榛好季礼盒曲奇华夫饼干500gx2盒', 'subdivision_id': '0', 'subdivision_name': '', 'subdivision_rank': '0', 'subsidy_rate': '0.00', 'tag_id': [], 'taobao_cate_id': '25870', 'team_name': '淘赢客', 'title': '榛好季坚果礼盒曲奇饼干华夫饼年货礼包节日送礼送长辈过年礼盒', 'tk_zs_id': '48223479', 'top_days': '0', 'topn_quantity': '0', 'topn_rate': '', 'topn_total_count': '0', 'trans_device_day8': '0', 'unique_activity': '', 'unit_price': '0', 'users_recommend_num': '0', 'yunfeixian': '0', 'zs_uid': '2668'}], 'no_goods': [], 'show_brand': None, 'show_brand_order': [], 'show_cid': [], 'subdivisionId': '0', 'subdivisionList': None, 'total': 3}}, 'msg': '获取成功', 'time': 1735350416, 'time_format': '2024-12-28 09:46:56'}
+        data = response_text.get('data')
+        search_list = data.get('search').get('list')
+        if search_list:
+            for goods in search_list:
+                id = goods.get('id')
+                shopName = goods.get('shop_name')
+                title = goods.get('title')
+                bottom_price = goods.get('original_price')
+                productImages = goods.get('main_pic')
+                commission = goods.get('commission_rate')
+                sku = [{"price":  bottom_price, "info": goods.get('sub_title')}]
+                url = f"https://dtkapi.ffquan.cn/taobaoapi/get-tpl?gid={id}"
+                response = requests.request("GET", url, headers=headers, data=payload)
+                # print(json.loads(response.text))
+                response_text = {'code': 1, 'data': "<img src='http://imgproxy.linjiabang.cn/i1/6000000002991/*o1*c*n01em*m*lqy1*xxvem*a*x*g*p*h_!!6000000002991-0-at.jpg'></br>趣多多豆豆曲奇缤纷口味新年礼盒24包*384g</br>券后【39.9元】包邮秒杀</br>5元优惠券：<a  target='_blank' href='https://uland.TaoBao.com/quan/detail?sellerId=144185701108507162&activityId=abe3e1ae924a4f17bccf9f8ccf72080e'>https://uland.TaoBao.com/quan/detail?sellerId=144185701108507162&activityId=abe3e1ae924a4f17bccf9f8ccf72080e</a></br>下单链接：<a  target='_blank' href='https://uland.TaoBao.com/item/edetail?id=jjjejQMU0tJZJdvjjnHBeJhJte-bXG76geHGP7jVrvMiZb'>https://uland.TaoBao.com/item/edetail?id=jjjejQMU0tJZJdvjjnHBeJhJte-bXG76geHGP7jVrvMiZb</a></br>趣多多豆豆曲奇缤纷口味新年礼盒24包*384g，原价49.9券后39.9</br>", 'msg': 'ok'}
+
+                url = ''
+                res = {
+                    'shopName': shopName,
+                    'title': title,
+                    'sku': sku,
+                    'bottom_price': bottom_price,
+                    'url': url,
+                    'image': productImages,
+                    'commission': commission,
+                }
+                res_list.append(res)
+        else:
+            break
+    if res_list:
+        print(res_list)
+        return res_list[0]
+    else:
+        return False
 
 
 
 
 
-
-
+get_taobao_goods({'k_name': '曲奇年礼法丽兹蛇'})
 
 
 
