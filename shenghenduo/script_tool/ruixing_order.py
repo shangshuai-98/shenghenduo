@@ -67,7 +67,7 @@ def down_order(code, deptData, productDataList, remarks):
         response_text = json.loads(response.text)
         status = response_text.get('data').get('status')  # 创建中 创建订单成功 支付成功
         print(status)
-        time.sleep(0.5)
+        time.sleep(1)
         if status == '支付成功':
             orderDetail = response_text.get('data').get('orderDetail')
             takeMealCodeInfo = orderDetail.get('takeMealCodeInfo')
@@ -115,7 +115,7 @@ def luck_down_order(sku, count, code, deptId, product_name, price, remarks, city
             print(sku_v)
             if sku_v[0] in order_sku_list:
                 xxx += 1
-        if xxx == len(order_sku_list):
+        if xxx >= len(skuSaleAttrValue):
             productData = response_text.get('data')
             productData['skuCode'] = sku.get('skuCode')
             productData['count'] = int(count)
@@ -304,7 +304,7 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
             # print(sku_v)
             if sku_v[0] in order_sku_list:
                 xxx += 1
-        if xxx == len(order_sku_list):
+        if xxx >= len(skuSaleAttrValue):
 
             url = "https://luffi.cn:8443/api/third/OrderCreate"
             payload = json.dumps({
