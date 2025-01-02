@@ -394,6 +394,10 @@ def get_order(order_id):
     code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
     result = ''
 
+    sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
+    val = [tuple([code_url, order_id])]
+    connect_mysql(sql, val)
+
     if 'luckin.hqyi' in code_url:
         code = code_url.split('code=')[1]
         result = luck_down_order(sku, count, code, deptId, product_name, price, remarks, city_id, store_name)
