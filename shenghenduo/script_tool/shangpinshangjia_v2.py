@@ -107,7 +107,7 @@ def get_goods_info(bottom_money_id):
         print('京东')
         # url = 'https://3.cn/2a3-GDW3 「【补贴价￥49.9，已补￥9.9】植护大包抽纸4层90抽*40大包整箱」'
         k_name = url.split(' ')[1]
-        k_name = extract_central_idea(k_name, 3)
+        k_name = extract_central_idea(k_name, 2)
         kw = {'k_name': k_name}
     print(kw)
     res = get_goods(plat, kw)
@@ -369,7 +369,7 @@ def get_taobao_goods(kw):
 def get_jingdong_goods(kw):
     k_name = kw.get('k_name')
     res_list = []
-    for page in range(1, 2):
+    for page in range(1, 4):
         url = f"https://api.duohaodan.com/Item/allList?page={page}&type=2&order=1&keyword={k_name}"
 
         payload = {}
