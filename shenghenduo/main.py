@@ -35,7 +35,7 @@ def get_coffee_meal_code(data: dict):
     result = get_order(data.get('order_id'))
     if result:
         return {"code":1, "msg": 'success', 'data': result}
-    return {"code":2, "msg": 'fail', 'data': False}
+    return {"code":2, "msg": 'fail', 'data': result}
 
 
 @app.post('/lxy/kf_coupon')
@@ -45,7 +45,7 @@ def get_coffee_meal_code(params: dict):
     result = kf_get_coupon_goods(params)
     if result:
         return {"code":1, "msg": 'success', 'data': result}
-    return {"code":2, "msg": 'fail', 'data': False}
+    return {"code":2, "msg": 'fail', 'data': result}
 
 
 @app.post("/post")

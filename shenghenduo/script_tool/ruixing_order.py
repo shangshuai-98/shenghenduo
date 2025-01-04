@@ -54,6 +54,8 @@ def down_order(code, deptData, productDataList, remarks):
 
     print(response.text)
     # {"code": 0, "message": "成功", "data": {"oid": "1870408939511169024"}, "error": "null"}
+    if json.loads(response.text).get('code') == -1:
+        return json.loads(response.text).get('error')
     oid = json.loads(response.text).get('data').get('oid')
     # oid = 1872937873159196672
     # print(oid)
@@ -391,7 +393,8 @@ def get_order(order_id):
     count = data[0][7]
     # todo
     remarks = ''
-    code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
+    if not code_url:
+        code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
     result = ''
 
     sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
@@ -411,7 +414,7 @@ def get_order(order_id):
         connect_mysql(sql, val)
         return result
     else:
-        return False
+        return result
 # get_order(829)
 
 # 快发平台买优惠券
@@ -464,9 +467,9 @@ def kf_get_coupon_goods(params):
         if pwd:
             return pwd
         else:
-            return False
+            return ''
     else:
-        return False
+        return ''
 
 
 
