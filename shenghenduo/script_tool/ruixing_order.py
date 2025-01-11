@@ -390,8 +390,7 @@ def get_order(pay_no):
     sql = f'SELECT order_id FROM fa_wanlshop_pay WHERE pay_no = {pay_no}'
     data = connect_mysql(sql, type=1)
     order_id = data[0][0]
-    print(order_id)
-    exit()
+
     sql = f'SELECT fa_wanlshop_order.couponcode, fa_wanlshop_order.store_id, fa_wanlshop_order.city_id, fa_wanlshop_order.store_name, fa_wanlshop_order_goods.market_price, fa_wanlshop_order_goods.difference, fa_wanlshop_order_goods.title, fa_wanlshop_order_goods.number, fa_wanlshop_order_goods.goods_id FROM fa_wanlshop_order INNER JOIN fa_wanlshop_order_goods on fa_wanlshop_order.id = fa_wanlshop_order_goods.order_id WHERE fa_wanlshop_order.id = {order_id}'
     data = connect_mysql(sql, type=1)
     # data = (('https://luckin.hqyi.net/#/?code=aSjBR0kpdxAsm4Qs8s', 385361, '26.00', '热,不另外加糖,大杯 16oz,含轻咖', '轻轻茉莉', 1),)
@@ -436,6 +435,7 @@ def get_order(pay_no):
 
     print(result)
     if result:
+        result['order_id'] = order_id
         sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime = %s, state = %s WHERE id = %s'
         val = [tuple([json.dumps(result), 2, int(time.time()), 6, order_id])]
         connect_mysql(sql, val)

@@ -203,7 +203,9 @@ def exchange_coupons(gbCityCode, keyword, code_url):
     # order_info_text = json.loads(order_response.text)
     order_info_text = {'code': 200, 'errCode': 0, 'data': {'orders': [{'phone': '0074', 'extensionPhone': '7828', 'remark': '', 'bookingTime': 0, 'localId': '20250109112236666', 'orderId': '1736392989384172959', 'pickupCode': 'A0062', 'name': '热辣香骨鸡(3块)*5', 'storename': '【焦作】塔南餐厅@外带', 'storecode': 'ZGZ179', 'status': 1, 'create': 1736392993, 'source': 13}], 'links_order': {'status': 2, 'type': 3, 'orderId': '20250109112236666', 'shop_api_id': 0}, 'fail_orders': [], 'payParamUpdateLog': [], 'delivery': []}}
     pickupCode = order_info_text.get('data').get('orders')[0].get('pickupCode')
-    print({"code": pickupCode,"takeOrderId": ""})
+    takeMealCodeInfo = {"code": pickupCode,"takeOrderId": ""}
+    print(takeMealCodeInfo)
+    return takeMealCodeInfo
 
 
 
