@@ -448,7 +448,7 @@ def get_order(pay_on):
         return result
     else:
         return result
-get_order('202501111624211683856353545797')
+# get_order('202501111624211683856353545797')
 
 # 快发平台买优惠券
 def kf_get_coupon_goods(params):
