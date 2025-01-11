@@ -1,3 +1,4 @@
+import json
 import time, asyncio
 
 from fastapi import FastAPI
@@ -5,6 +6,7 @@ from models import Item
 from script_tool.shangpinshangjia_v2 import get_goods_info
 from script_tool.celery_worker import celery_app as celery_app
 from script_tool.ruixing_order import get_order, kf_get_coupon_goods
+from script_tool.KFC_replace_order import select_stores
 
 app = FastAPI()
 
@@ -31,18 +33,32 @@ def get_test(bottom_money_id):
 # https://d.luffi.cn/#/?key=u45JcPg2inN7wY8QcN
 @app.post('/lxy/coffee/mealCode')
 def get_coffee_meal_code(data: dict):
+    # 914 915
     print(data)
-    result = get_order(data.get('order_id'))
+    result = get_order(data.get('pay_on'))
     if result:
         return {"code":1, "msg": 'success', 'data': result}
     return {"code":2, "msg": 'fail', 'data': result}
 
 
 @app.post('/lxy/kf_coupon')
-def get_coffee_meal_code(params: dict):
+def get_kf_coupon_code(params: dict):
     print(params)
     # face_price = params.get('face_price')
     result = kf_get_coupon_goods(params)
+    if result:
+        return {"code":1, "msg": 'success', 'data': result}
+    return {"code":2, "msg": 'fail', 'data': result}
+
+
+@app.post('/lxy/KFC_city')
+def get_KFC_city_code(params: dict):
+    print(params)
+    # face_price = params.get('face_price')
+    gbCityCode = params.get('gbCityCode')
+    keyword = params.get('keyword')
+    result = select_stores(gbCityCode, keyword)
+    result = json.loads(result.text)
     if result:
         return {"code":1, "msg": 'success', 'data': result}
     return {"code":2, "msg": 'fail', 'data': result}
