@@ -51,12 +51,8 @@ def get_kf_coupon_code(params: dict):
     return {"code":2, "msg": 'fail', 'data': result}
 
 
-@app.post('/lxy/KFC_city')
-def get_KFC_city_code(params: dict):
-    print(params)
-    # face_price = params.get('face_price')
-    gbCityCode = params.get('gbCityCode')
-    keyword = params.get('keyword')
+@app.get('/lxy/KFC_city')
+def get_KFC_city_code(gbCityCode, keyword):
     result = select_stores(gbCityCode, keyword)
     result = json.loads(result.text)
     if result:

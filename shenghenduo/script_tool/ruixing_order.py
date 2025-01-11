@@ -14,7 +14,7 @@ import time
 import requests
 import pandas as pd
 from script_tool.database import connect_mysql
-from script_tool.KFC_replace_order import exchange_coupons
+from script_tool.KFC_replace_order import exchange_coupons, kf_get_KFC_coupon_goods
 
 
 
@@ -411,13 +411,13 @@ def get_order(pay_no):
     data = connect_mysql(sql, type=1)
     print(data)
     brand = data[0][0]
+    result = ''
     if brand == '瑞幸咖啡':
         if not code_url:
             code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
             sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
             val = [tuple([code_url, order_id])]
             connect_mysql(sql, val)
-        result = ''
 
         if 'luckin.hqyi' in code_url:
             code = code_url.split('code=')[1]
@@ -425,22 +425,23 @@ def get_order(pay_no):
         elif 'd.luffi' in code_url:
             code = code_url.split('key=')[1]
             result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
-        print(result)
-        if result:
-            sql = f'UPDATE fa_wanlshop_order SET couponcode = %s, changecode = %s, couponstate = %s, coupontime = %s, state = %s WHERE id = %s'
-            val = [tuple([code_url, json.dumps(result), 2, int(time.time()), 6, order_id])]
-            connect_mysql(sql, val)
-            return result
-        else:
-            return result
     elif brand == '肯德基':
-        pass
-        # gbCityCode = 410800
-        # keyword = '塔南餐厅'
-        # # code_url = 'https://xd.foodyh.cn/?dp=1&order=20250108103332474'
-        # code_url = 'https://xd.foodyh.cn/?dp=1&order=20250108180300942'
-        # exchange_coupons(gbCityCode, keyword, code_url)
-# get_order('202501091408400292046356499848')
+        if not code_url:
+            code_url = kf_get_KFC_coupon_goods(product_name)
+            sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
+            val = [tuple([code_url, order_id])]
+            connect_mysql(sql, val)
+        result = exchange_coupons(deptId, store_name, code_url)
+
+    print(result)
+    if result:
+        sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime = %s, state = %s WHERE id = %s'
+        val = [tuple([json.dumps(result), 2, int(time.time()), 6, order_id])]
+        connect_mysql(sql, val)
+        return result
+    else:
+        return result
+# get_order('202501091401500152046310148571')
 
 # 快发平台买优惠券
 def kf_get_coupon_goods(params):
