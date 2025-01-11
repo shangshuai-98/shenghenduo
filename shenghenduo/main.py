@@ -2,7 +2,7 @@ import json
 import time, asyncio
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.middleware.cors import CORSMiddleware
 from models import Item
 from script_tool.shangpinshangjia_v2 import get_goods_info
 from script_tool.celery_worker import celery_app as celery_app
@@ -11,18 +11,18 @@ from script_tool.KFC_replace_order import select_stores
 
 app = FastAPI()
 
-# 允许所有来源的跨域请求
-app.add_middleware(
-    CORSMiddleware,
-    # 允许所有来源的跨域请求
-    allow_origins=["*"],
-    # 参数设置为True表示允许携带身份凭证，如cookies
-    allow_credentials=True,
-    # 表示允许所有HTTP方法的请求
-    allow_methods=["*"],
-    # 表示允许所有请求头
-    allow_headers=["*"]
-)
+# # 允许所有来源的跨域请求
+# app.add_middleware(
+#     CORSMiddleware,
+#     # 允许所有来源的跨域请求
+#     allow_origins=["*"],
+#     # 参数设置为True表示允许携带身份凭证，如cookies
+#     allow_credentials=True,
+#     # 表示允许所有HTTP方法的请求
+#     allow_methods=["*"],
+#     # 表示允许所有请求头
+#     allow_headers=["*"]
+# )
 
 
 @app.get("/")
