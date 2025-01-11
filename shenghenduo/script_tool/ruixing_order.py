@@ -14,6 +14,7 @@ import time
 import requests
 import pandas as pd
 from script_tool.database import connect_mysql
+from script_tool.KFC_replace_order import exchange_coupons
 
 
 
@@ -135,6 +136,8 @@ def luck_down_order(sku, count, code, deptId, product_name, price, remarks, city
     # print(sku_list)
 
 def get_store_menu(code, deptId, product_name):
+    product_name = product_name.replace('(', '（')
+    product_name = product_name.replace(')', '）')
     url = f"https://kmapi.hqyi.net/LuckinCoffee/api/getCdkeyInfo?code={code}"
 
     payload = {}
@@ -171,6 +174,8 @@ def get_store_menu(code, deptId, product_name):
         for productList in twoProductList:
             for goods_info in productList.get('productList'):
                 name = goods_info.get('name')
+                name = name.replace('(', '（')
+                name = name.replace(')', '）')
                 productId = goods_info.get('productId')
                 if productId in product_id_list and product_name in name:
                     print(name)
@@ -249,6 +254,8 @@ def get_token(code):
 
 
 def get_luffi_product_id(deptId, token, product_name):
+    product_name = product_name.replace('(', '（')
+    product_name = product_name.replace(')', '）')
     url = f"https://luffi.cn:8443/api/rx/goodsAppList?deptId={deptId}"
     payload = {}
     headers = {
@@ -271,6 +278,8 @@ def get_luffi_product_id(deptId, token, product_name):
         for productList in twoProductList:
             for goods_info in productList.get('productList'):
                 name = goods_info.get('name')
+                name = name.replace('(', '（')
+                name = name.replace(')', '）')
                 productId = goods_info.get('productId')
                 if product_name in name:
                     print(name)
@@ -377,8 +386,12 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
 # print(codeInfo)
 
 
-def get_order(order_id):
-    sql = f'SELECT fa_wanlshop_order.couponcode, fa_wanlshop_order.store_id, fa_wanlshop_order.city_id, fa_wanlshop_order.store_name, fa_wanlshop_order_goods.market_price, fa_wanlshop_order_goods.difference, fa_wanlshop_order_goods.title, fa_wanlshop_order_goods.number FROM fa_wanlshop_order INNER JOIN fa_wanlshop_order_goods on fa_wanlshop_order.id = fa_wanlshop_order_goods.order_id WHERE fa_wanlshop_order.id = {order_id}'
+def get_order(pay_no):
+    sql = f'SELECT order_id FROM fa_wanlshop_pay WHERE pay_no = {pay_no}'
+    data = connect_mysql(sql, type=1)
+    order_id = data[0][0]
+
+    sql = f'SELECT fa_wanlshop_order.couponcode, fa_wanlshop_order.store_id, fa_wanlshop_order.city_id, fa_wanlshop_order.store_name, fa_wanlshop_order_goods.market_price, fa_wanlshop_order_goods.difference, fa_wanlshop_order_goods.title, fa_wanlshop_order_goods.number, fa_wanlshop_order_goods.goods_id FROM fa_wanlshop_order INNER JOIN fa_wanlshop_order_goods on fa_wanlshop_order.id = fa_wanlshop_order_goods.order_id WHERE fa_wanlshop_order.id = {order_id}'
     data = connect_mysql(sql, type=1)
     # data = (('https://luckin.hqyi.net/#/?code=aSjBR0kpdxAsm4Qs8s', 385361, '26.00', '热,不另外加糖,大杯 16oz,含轻咖', '轻轻茉莉', 1),)
     # data = (('https://luckin.hqyi.net/#/?code=JBk4BJBbBupeqpNTlf', 385361, '29.00', '冰,标准甜', '生椰拿铁', 1),)
@@ -391,31 +404,43 @@ def get_order(order_id):
     sku = data[0][5]
     product_name = data[0][6]
     count = data[0][7]
+    goods_id = data[0][8]
     # todo
     remarks = ''
-    if not code_url:
-        code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
-    result = ''
+    sql = f'SELECT fa_wanlshop_brand.`name` FROM fa_wanlshop_goods JOIN fa_wanlshop_brand ON fa_wanlshop_goods.brand_id = fa_wanlshop_brand.id WHERE fa_wanlshop_goods.id = {goods_id}'
+    data = connect_mysql(sql, type=1)
+    print(data)
+    brand = data[0][0]
+    if brand == '瑞幸咖啡':
+        if not code_url:
+            code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
+            sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
+            val = [tuple([code_url, order_id])]
+            connect_mysql(sql, val)
+        result = ''
 
-    sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
-    val = [tuple([code_url, order_id])]
-    connect_mysql(sql, val)
-
-    if 'luckin.hqyi' in code_url:
-        code = code_url.split('code=')[1]
-        result = luck_down_order(sku, count, code, deptId, product_name, price, remarks, city_id, store_name)
-    elif 'd.luffi' in code_url:
-        code = code_url.split('key=')[1]
-        result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
-    print(result)
-    if result:
-        sql = f'UPDATE fa_wanlshop_order SET couponcode = %s, changecode = %s, couponstate = %s, coupontime = %s WHERE id = %s'
-        val = [tuple([code_url, json.dumps(result), 2, int(time.time()), order_id])]
-        connect_mysql(sql, val)
-        return result
-    else:
-        return result
-# get_order(829)
+        if 'luckin.hqyi' in code_url:
+            code = code_url.split('code=')[1]
+            result = luck_down_order(sku, count, code, deptId, product_name, price, remarks, city_id, store_name)
+        elif 'd.luffi' in code_url:
+            code = code_url.split('key=')[1]
+            result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
+        print(result)
+        if result:
+            sql = f'UPDATE fa_wanlshop_order SET couponcode = %s, changecode = %s, couponstate = %s, coupontime = %s, state = %s WHERE id = %s'
+            val = [tuple([code_url, json.dumps(result), 2, int(time.time()), 6, order_id])]
+            connect_mysql(sql, val)
+            return result
+        else:
+            return result
+    elif brand == '肯德基':
+        pass
+        # gbCityCode = 410800
+        # keyword = '塔南餐厅'
+        # # code_url = 'https://xd.foodyh.cn/?dp=1&order=20250108103332474'
+        # code_url = 'https://xd.foodyh.cn/?dp=1&order=20250108180300942'
+        # exchange_coupons(gbCityCode, keyword, code_url)
+# get_order('202501091408400292046356499848')
 
 # 快发平台买优惠券
 def kf_get_coupon_goods(params):
