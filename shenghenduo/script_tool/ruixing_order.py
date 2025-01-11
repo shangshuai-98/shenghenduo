@@ -346,6 +346,7 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
             data = json.loads(response.text).get('data')
             if data: # 有值时购买失败
                 print('兑换失败')
+                return data
 
             # takeMealCodeInfo = down_order(code, deptId, productDataList, remarks)
             for _ in range(300):
@@ -434,7 +435,7 @@ def get_order(pay_no):
         result = exchange_coupons(deptId, store_name, code_url)
 
     print(result)
-    if result:
+    if result.get('code'):
         result['order_id'] = order_id
         sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime = %s, state = %s WHERE id = %s'
         val = [tuple([json.dumps(result), 2, int(time.time()), 6, order_id])]
