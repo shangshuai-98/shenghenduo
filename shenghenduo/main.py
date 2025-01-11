@@ -45,11 +45,21 @@ def get_test(bottom_money_id):
 # https://d.luffi.cn/#/?key=F12TlLyrFKa7q4tDMQ
 # https://luckin.hqyi.net/#/?code=aDWSvnTrVWYmBpNx7H
 # https://d.luffi.cn/#/?key=u45JcPg2inN7wY8QcN
-@app.post('/lxy/coffee/mealCode')
-def get_coffee_meal_code(data: dict):
+# @app.post('/lxy/coffee/mealCode')
+# def get_coffee_meal_code(data: dict):
+#     # 914 915
+#     print(data)
+#     result = get_order(data.get('pay_on'))
+#     if result:
+#         return {"code":1, "msg": 'success', 'data': result}
+#     return {"code":2, "msg": 'fail', 'data': result}
+
+
+@app.get('/lxy/coffee/mealCode')
+def get_coffee_meal_code(pay_on: str):
     # 914 915
-    print(data)
-    result = get_order(data.get('pay_on'))
+    # print(data)
+    result = get_order(pay_on)
     if result:
         return {"code":1, "msg": 'success', 'data': result}
     return {"code":2, "msg": 'fail', 'data': result}

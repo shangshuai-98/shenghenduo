@@ -387,8 +387,8 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
 # print(codeInfo)
 
 
-def get_order(pay_no):
-    sql = f'SELECT order_id FROM fa_wanlshop_pay WHERE pay_no = {pay_no}'
+def get_order(pay_on):
+    sql = f'SELECT order_id FROM fa_wanlshop_pay WHERE pay_no = {pay_on}'
     data = connect_mysql(sql, type=1)
     order_id = data[0][0]
 
