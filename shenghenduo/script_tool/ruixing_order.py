@@ -392,7 +392,7 @@ def get_order(pay_on):
     data = connect_mysql(sql, type=1)
     order_id = data[0][0]
 
-    sql = f'SELECT fa_wanlshop_order.couponcode, fa_wanlshop_order.store_id, fa_wanlshop_order.city_id, fa_wanlshop_order.store_name, fa_wanlshop_order_goods.market_price, fa_wanlshop_order_goods.difference, fa_wanlshop_order_goods.title, fa_wanlshop_order_goods.number, fa_wanlshop_order_goods.goods_id FROM fa_wanlshop_order INNER JOIN fa_wanlshop_order_goods on fa_wanlshop_order.id = fa_wanlshop_order_goods.order_id WHERE fa_wanlshop_order.id = {order_id}'
+    sql = f'SELECT fa_wanlshop_order.couponcode, fa_wanlshop_order.store_id, fa_wanlshop_order.city_id, fa_wanlshop_order.store_name, fa_wanlshop_order_goods.market_price, fa_wanlshop_order_goods.difference, fa_wanlshop_order_goods.title, fa_wanlshop_order_goods.number, fa_wanlshop_order_goods.goods_id, fa_wanlshop_order_goods.goods_sku_id FROM fa_wanlshop_order INNER JOIN fa_wanlshop_order_goods on fa_wanlshop_order.id = fa_wanlshop_order_goods.order_id WHERE fa_wanlshop_order.id = {order_id}'
     data = connect_mysql(sql, type=1)
     # data = (('https://luckin.hqyi.net/#/?code=aSjBR0kpdxAsm4Qs8s', 385361, '26.00', '热,不另外加糖,大杯 16oz,含轻咖', '轻轻茉莉', 1),)
     # data = (('https://luckin.hqyi.net/#/?code=JBk4BJBbBupeqpNTlf', 385361, '29.00', '冰,标准甜', '生椰拿铁', 1),)
@@ -406,6 +406,7 @@ def get_order(pay_on):
     product_name = data[0][6]
     count = data[0][7]
     goods_id = data[0][8]
+    goods_sku_id = data[0][9]
     # todo
     remarks = ''
     sql = f'SELECT fa_wanlshop_brand.`name` FROM fa_wanlshop_goods JOIN fa_wanlshop_brand ON fa_wanlshop_goods.brand_id = fa_wanlshop_brand.id WHERE fa_wanlshop_goods.id = {goods_id}'
@@ -428,7 +429,11 @@ def get_order(pay_on):
             result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
     elif brand == '肯德基':
         if not code_url:
-            code_url = kf_get_KFC_coupon_goods(product_name)
+            sql = f'SELECT weigh, sn FROM fa_wanlshop_goods_sku WHERE id = {goods_sku_id}'
+            data = connect_mysql(sql, type=1)
+            product_name = data[0][0]
+            sn = data[0][1]
+            code_url = kf_get_KFC_coupon_goods(product_name, sn)
             sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
             val = [tuple([code_url, order_id])]
             connect_mysql(sql, val)
@@ -443,7 +448,7 @@ def get_order(pay_on):
         return result
     else:
         return result
-# get_order('202501091401500152046310148571')
+get_order('202501111624211683856353545797')
 
 # 快发平台买优惠券
 def kf_get_coupon_goods(params):

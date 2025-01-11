@@ -6,7 +6,7 @@ import json, time, requests
 
 
 
-def kf_get_KFC_coupon_goods(word):
+def kf_get_KFC_coupon_goods(word, sku):
     url = "https://test.haomachina.cn/api/Coupon/getGoods"
     payload = json.dumps({
         "page": 1,
@@ -32,23 +32,23 @@ def kf_get_KFC_coupon_goods(word):
         for i in data:
             if int(i.get('status')) != 1:
                 continue
-            if word in i.get('name'):
-                print(i.get('id'))
-                url = "https://guchi.haomachina.cn/api/Coupon/addOrder"
-                payload = json.dumps({
-                    "id": i.get('id'),
-                    "count": 1,
-                    "payType": 0
-                })
-                # print(payload)
-                response = requests.request("POST", url, headers=headers, data=payload)
-                response_text = json.loads(response.text)
-                # response_text = {'cards': [{'number': '', 'pwd': 'https://luckin.hqyi.net/#/?code=JBk4BJBbBupeqpNTlf', 'time': '', 'gifts': ''}], 'code': 1000, 'id': 155364, 'msg': '购买成功', 'number': '20241228151832574'}
-                # print(response_text)
-                cards = response_text.get('cards')
-                pwd = cards[0].get('pwd')
-                print(pwd)
-                break
+            print(i.get('id'))
+            url = "https://guchi.haomachina.cn/api/Coupon/addOrder"
+            payload = json.dumps({
+                "id": i.get('id'),
+                "count": 1,
+                "payType": 0,
+                "sku": sku
+            })
+            # print(payload)
+            response = requests.request("POST", url, headers=headers, data=payload)
+            response_text = json.loads(response.text)
+            # response_text = {'cards': [{'number': '', 'pwd': 'https://luckin.hqyi.net/#/?code=JBk4BJBbBupeqpNTlf', 'time': '', 'gifts': ''}], 'code': 1000, 'id': 155364, 'msg': '购买成功', 'number': '20241228151832574'}
+            # print(response_text)
+            cards = response_text.get('cards')
+            pwd = cards[0].get('pwd')
+            print(pwd)
+            break
         if pwd:
             return pwd
         else:
@@ -183,25 +183,30 @@ def exchange_coupons(gbCityCode, keyword, code_url):
     cityName = fast_text.get('data').get('data').get('store').get('cityName')
     print(cityName)
 
-    # bookingTime = '1736381700000'
-    bookingTime = 0
-    data = {
-        "order": orderId,
-        "remark": "",
-        "storeCode": storecode,
-        "cityName": cityName,
-        "packType": "1",
-        "bookingTime": bookingTime,
-        "haveFail": "0",
-        "address": ""
-    }
-    # order_res = submit_order(data)
-    # print(json.loads(order_res.text))
+    # bookingTime = '1736640900'
+    for n in range(2):
+        bookingTime = 0
+        data = {
+            "order": orderId,
+            "remark": "",
+            "storeCode": storecode,
+            "cityName": cityName,
+            "packType": "1",
+            "bookingTime": bookingTime,
+            "haveFail": n,
+            "address": ""
+        }
+        order_res = submit_order(data)
+        print(json.loads(order_res.text))
+        if json.loads(order_res.text).get('code') == 200:
+            break
+    else:
+        return {'msg':json.loads(order_res.text).get('msg')}
 
     print(orderId)
-    # order_response = get_order_info(orderId)
-    # order_info_text = json.loads(order_response.text)
-    order_info_text = {'code': 200, 'errCode': 0, 'data': {'orders': [{'phone': '0074', 'extensionPhone': '7828', 'remark': '', 'bookingTime': 0, 'localId': '20250109112236666', 'orderId': '1736392989384172959', 'pickupCode': 'A0062', 'name': '热辣香骨鸡(3块)*5', 'storename': '【焦作】塔南餐厅@外带', 'storecode': 'ZGZ179', 'status': 1, 'create': 1736392993, 'source': 13}], 'links_order': {'status': 2, 'type': 3, 'orderId': '20250109112236666', 'shop_api_id': 0}, 'fail_orders': [], 'payParamUpdateLog': [], 'delivery': []}}
+    order_response = get_order_info(orderId)
+    order_info_text = json.loads(order_response.text)
+    # order_info_text = {'code': 200, 'errCode': 0, 'data': {'orders': [{'phone': '0074', 'extensionPhone': '7828', 'remark': '', 'bookingTime': 0, 'localId': '20250109112236666', 'orderId': '1736392989384172959', 'pickupCode': 'A0062', 'name': '热辣香骨鸡(3块)*5', 'storename': '【焦作】塔南餐厅@外带', 'storecode': 'ZGZ179', 'status': 1, 'create': 1736392993, 'source': 13}], 'links_order': {'status': 2, 'type': 3, 'orderId': '20250109112236666', 'shop_api_id': 0}, 'fail_orders': [], 'payParamUpdateLog': [], 'delivery': []}}
     pickupCode = order_info_text.get('data').get('orders')[0].get('pickupCode')
     takeMealCodeInfo = {"code": pickupCode,"takeOrderId": ""}
     print(takeMealCodeInfo)
