@@ -56,10 +56,10 @@ def get_coffee_meal_code(data: dict):
 
 
 @app.get('/lxy/coffee/mealCode')
-def get_coffee_meal_code(pay_on: str):
+def get_coffee_meal_code(trade_no: str):
     # 914 915
     # print(data)
-    result = get_order(pay_on)
+    result = get_order(trade_no)
     if result:
         return {"code":1, "msg": 'success', 'data': result}
     return {"code":2, "msg": 'fail', 'data': result}
