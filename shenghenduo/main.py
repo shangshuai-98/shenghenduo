@@ -56,7 +56,7 @@ def get_coffee_meal_code(data: dict):
 
 
 @app.get('/lxy/coffee/mealCode')
-def get_coffee_meal_code(trade_no: str):
+def get_coffee_meal_code(trade_no):
     # 914 915
     # print(data)
     result = get_order(trade_no)
