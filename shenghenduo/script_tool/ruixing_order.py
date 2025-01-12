@@ -287,7 +287,34 @@ def get_luffi_product_id(deptId, token, product_name):
                     return productId
 
 
-def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
+def luffi_get_city(city_id, store_name):
+    headers = {
+        "Accept": "*/*",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+        "Connection": "keep-alive",
+        "Content-Type": "application/json",
+        "Origin": "https://d.luffi.cn",
+        "Referer": "https://d.luffi.cn/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "Token": "adbeaabffccb4027925969233867c318",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+    }
+    url = "https://luffi.cn:8443/api/rx/newShops"
+
+    data = {
+        "cityId": city_id,
+        "offSet": 0,
+        "pageSize": 8,
+        "searchValue": store_name
+    }
+    data = json.dumps(data, separators=(',', ':'))
+    response = requests.post(url, headers=headers, data=data)
+    return response
+
+
+def luffi_down_order(code, deptId, product_name, sku, count, price, remarks, city_id, store_name):
     token = get_token(code)
     # order_sku_list = ['热', '不另外加糖', '锡兰红茶']
     if '杯' in sku:
@@ -308,6 +335,7 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
     # print(sku_list)
     for sku in sku_list:
         skuSaleAttrValue = sku.get('skuSaleAttrValue')
+        skuName = '+'.join([v[0] for k,v in skuSaleAttrValue.items()])
         print(sku.get('skuCode'))
         # print(skuSaleAttrValue)
         xxx = 0
@@ -317,19 +345,50 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks):
                 xxx += 1
         if xxx >= len(skuSaleAttrValue):
 
+            city_info = luffi_get_city(city_id, store_name)
+            city_info = json.loads(city_info.text)
+            cityName = city_info.get('content').get('otherShopList')[0].get('cityName')
+            address = city_info.get('content').get('otherShopList')[0].get('address')
+
             url = "https://luffi.cn:8443/api/third/OrderCreate"
             payload = json.dumps({
                 "deptId": deptId,
                 "productList": [
                     {
+                        "productKey": f"{deptId},{sku.get('skuCode')}",
                         "productId": productId,
                         "amount": count,
+                        "indexId": 0,
+                        "cafeKuId": "",
+                        "processTypeDetailList": [],
                         "skuCode": sku.get('skuCode'),
+                        "skuName": skuName,
                         "productPrice": price,
                         "productName": product_name
                     }
                 ],
-                "remark": remarks
+                "delivery": "pick",
+                "addressId": "",
+                "eatway": "eat",
+                "couponCodeList": [],
+                "immediately": 1,
+                "needTableware": 0,
+                "submit": 0,
+                "submitOf600": 0,
+                "joinPlan": [],
+                "needs": [],
+                "showAgain": 0,
+                "useCoffeeStore": 1,
+                "paymentAccountType": 1,
+                "deviceRmsId": "",
+                "appointmentTime": "",
+                "remark": remarks,
+                "shopInfo": {
+                    "cityId": city_id,
+                    "cityName": cityName,
+                    "address": address,
+                    "shopName": store_name
+                }
             })
             headers = {
                 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
@@ -427,14 +486,14 @@ def get_order(trade_no):
             result = luck_down_order(sku, count, code, deptId, product_name, price, remarks, city_id, store_name)
         elif 'd.luffi' in code_url:
             code = code_url.split('key=')[1]
-            result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks)
+            result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks, city_id, store_name)
     elif brand == '肯德基':
         if not code_url:
             sql = f'SELECT weigh, sn FROM fa_wanlshop_goods_sku WHERE id = {goods_sku_id}'
             data = connect_mysql(sql, type=1)
-            product_name = data[0][0]
+            word = data[0][0]
             sn = data[0][1]
-            code_url = kf_get_KFC_coupon_goods(product_name, sn)
+            code_url = kf_get_KFC_coupon_goods(word, sn)
             sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
             val = [tuple([code_url, order_id])]
             connect_mysql(sql, val)
@@ -450,7 +509,7 @@ def get_order(trade_no):
         return result
     else:
         return result
-# get_order('202501111624211683856353545797')
+# get_order('2025010922001456491429627902')
 
 # 快发平台买优惠券
 def kf_get_coupon_goods(params):
