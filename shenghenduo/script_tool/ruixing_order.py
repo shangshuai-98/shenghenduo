@@ -443,6 +443,7 @@ def get_order(trade_no):
     print(result)
     if result.get('code'):
         result['order_id'] = order_id
+        result['brand'] = brand
         sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime = %s, state = %s WHERE id = %s'
         val = [tuple([json.dumps(result), 2, int(time.time()), 6, order_id])]
         connect_mysql(sql, val)
