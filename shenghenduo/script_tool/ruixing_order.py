@@ -593,13 +593,9 @@ def get_kf_database():
     sql = 'SELECT fa_wanlshop_goods.id, fa_wanlshop_goods_sku.id, fa_wanlshop_goods_sku.weigh, fa_wanlshop_goods_sku.sn, fa_wanlshop_goods.price, fa_wanlshop_goods_sku.sale_price, fa_wanlshop_goods.status FROM fa_wanlshop_goods JOIN fa_wanlshop_goods_sku ON fa_wanlshop_goods.id = fa_wanlshop_goods_sku.goods_id WHERE fa_wanlshop_goods_sku.state = "0" AND fa_wanlshop_goods.source_platform = 6'
     kf_goods_data = connect_mysql(sql, type=1)
     # print(kf_goods_data)
-    # db_status = {'normal':1, 'hidden': 2}
     res = []
     for goods in kf_goods_data:
         if str(goods[2]) != "0" and str(goods[2]) != '1':
-            # print(goods[0])
-            # print(goods[1])
-            # goods_status = db_status.get(goods[6])
             res.append({
                 'goods_id': goods[0],
                 'goods_sku_id': goods[1],
@@ -648,7 +644,6 @@ def get_kf_goods(weigh, sn):
     return res
 
 
-
 def kf_check_main():
     goods_res = []
     sku_res = []
@@ -680,8 +675,8 @@ def kf_check_main():
         else:  # 未找到商品，已下架
             print('-----ssss-----'*12)
             print(db_goods)
-    print(goods_res)
-    print(sku_res)
+    # print(goods_res)
+    # print(sku_res)
 
     goods_val = []
     sku_val = []
@@ -691,12 +686,12 @@ def kf_check_main():
         sku_val.append(tuple([i.get('goods_sku_price'), i.get('goods_sku_id')]))
 
     goods_sql = 'UPDATE fa_wanlshop_goods SET fa_wanlshop_goods.status = %s WHERE fa_wanlshop_goods.id = %s'
-    # print(goods_val)
-    # connect_mysql(goods_sql, goods_val)
+    print(goods_val)
+    connect_mysql(goods_sql, goods_val)
 
     sku_sql = 'UPDATE fa_wanlshop_goods_sku SET fa_wanlshop_goods_sku.sale_price = %s WHERE fa_wanlshop_goods_sku.id = %s'
-    # print(sku_val)
-    # connect_mysql(sku_sql, sku_val)
+    print(sku_val)
+    connect_mysql(sku_sql, sku_val)
 
 
 
