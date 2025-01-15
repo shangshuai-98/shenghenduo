@@ -446,11 +446,19 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks, cit
 # print(codeInfo)
 
 
-def get_order(trade_no):
-    sql = f'SELECT order_id FROM fa_wanlshop_pay WHERE trade_no = {trade_no}'
-    data = connect_mysql(sql, type=1)
-    print(data)
-    order_id = data[0][0]
+def get_order(params):
+    trade_no = params.get('pay_on')
+    orderId = params.get('order_id')
+    if trade_no:
+        sql = f'SELECT order_id FROM fa_wanlshop_pay WHERE trade_no = {trade_no}'
+        data = connect_mysql(sql, type=1)
+        print(data)
+        if data:
+            order_id = data[0][0]
+        else:
+            return '未找到订单'
+    else:
+        order_id = orderId
 
     sql = f'SELECT fa_wanlshop_order.couponcode, fa_wanlshop_order.store_id, fa_wanlshop_order.city_id, fa_wanlshop_order.store_name, fa_wanlshop_order_goods.market_price, fa_wanlshop_order_goods.difference, fa_wanlshop_order_goods.title, fa_wanlshop_order_goods.number, fa_wanlshop_order_goods.goods_id, fa_wanlshop_order_goods.goods_sku_id FROM fa_wanlshop_order INNER JOIN fa_wanlshop_order_goods on fa_wanlshop_order.id = fa_wanlshop_order_goods.order_id WHERE fa_wanlshop_order.id = {order_id}'
     data = connect_mysql(sql, type=1)
@@ -569,6 +577,133 @@ def kf_get_coupon_goods(params):
 
 
 # kf_get_coupon_goods(29)
+
+
+
+
+"""
+快发商品同步
+1.查数据库所有快发商品，拿到编码
+2.获取快发所有商品
+3.循环对比数据
+4.数据入库
+"""
+
+def get_kf_database():
+    sql = 'SELECT fa_wanlshop_goods.id, fa_wanlshop_goods_sku.id, fa_wanlshop_goods_sku.weigh, fa_wanlshop_goods_sku.sn, fa_wanlshop_goods.price, fa_wanlshop_goods_sku.sale_price, fa_wanlshop_goods.status FROM fa_wanlshop_goods JOIN fa_wanlshop_goods_sku ON fa_wanlshop_goods.id = fa_wanlshop_goods_sku.goods_id WHERE fa_wanlshop_goods_sku.state = "0" AND fa_wanlshop_goods.source_platform = 6'
+    kf_goods_data = connect_mysql(sql, type=1)
+    # print(kf_goods_data)
+    # db_status = {'normal':1, 'hidden': 2}
+    res = []
+    for goods in kf_goods_data:
+        if str(goods[2]) != "0" and str(goods[2]) != '1':
+            # print(goods[0])
+            # print(goods[1])
+            # goods_status = db_status.get(goods[6])
+            res.append({
+                'goods_id': goods[0],
+                'goods_sku_id': goods[1],
+                'weigh': goods[2],
+                'sn': goods[3],
+                'goods_price': float(goods[4]),
+                'goods_sku_price': float(goods[5]),
+                'goods_status': goods[6],
+            })
+    return res
+
+
+def get_kf_goods(weigh, sn):
+
+    url = "https://guchi.haomachina.cn/api/Coupon/getGoodsDetail"
+    payload = {"id": weigh}
+
+    response = requests.request("POST", url, data=payload)
+    response_text = json.loads(response.text)
+    # print(response_text)
+    res = {
+        'weigh': weigh,
+        'sn': sn
+    }
+    if response_text.get('code') == 1000:
+        # 上架下架
+        status = response_text.get('data')[0].get('status')
+        money = response_text.get('data')[0].get('money')
+        # 单一规格
+        res.update({
+            'status': status,  # 商品状态
+            'money': money,    # 商品价格
+        })
+        skuDetails = response_text.get('data')[0].get('skuDetails')
+        if skuDetails: # 有多种规格
+            for goods_sku in skuDetails:
+                if sn == goods_sku.get('sku'):
+                    # print(goods_sku.get('names'))
+                    sku_status = goods_sku.get('status')
+                    sku_money = goods_sku.get('money')
+                    res.update({
+                        'sku_status': sku_status,  # 规格状态
+                        'sku_money': sku_money     # 规格价格
+                    })
+    print(res)
+    return res
+
+
+
+def kf_check_main():
+    goods_res = []
+    sku_res = []
+    db_status = {1: 'normal', 2: 'hidden'}
+    data_goods_list = get_kf_database()
+    for db_goods in data_goods_list:
+        # {'goods_id': 1549434, 'goods_sku_id': 1604728, 'weigh': '2562', 'sn': '100009583-100002941', 'goods_price': 6.6, 'goods_sku_price': 6.6, 'goods_status': '1'}
+        # print(db_goods)
+        goods_status = get_kf_goods(db_goods.get('weigh'), db_goods.get('sn'))  # 快发平台数据
+        if goods_status: # 找到商品对比数据
+            goods_res_dict = {}
+            sku_res_dict = {}
+            if db_status.get(goods_status.get('status')) != db_goods.get('goods_status'):  # 判断商品状态上架下架
+                goods_res_dict['goods_id'] = db_goods.get('goods_id')
+                goods_res_dict['goods_status'] = db_status.get(goods_status.get('status'))
+                goods_res_dict['goods_price'] = goods_status.get('money') + 0.5
+            if goods_status.get('money') + 0.5 > db_goods.get('goods_price'):
+                goods_res_dict['goods_id'] = db_goods.get('goods_id')
+                goods_res_dict['goods_status'] = db_status.get(goods_status.get('status'))
+                goods_res_dict['goods_price'] = goods_status.get('money') + 0.5
+            if goods_status.get('sku_money'):
+                if goods_status.get('sku_money') + 0.5 > db_goods.get('goods_sku_price'):
+                    sku_res_dict['goods_sku_id'] = db_goods.get('goods_sku_id')
+                    sku_res_dict['goods_sku_price'] = goods_status.get('sku_money') + 0.5
+            if goods_res_dict and not any(d['goods_id'] == goods_res_dict['goods_id'] for d in goods_res):
+                goods_res.append(goods_res_dict)
+            if sku_res_dict:
+                sku_res.append(sku_res_dict)
+        else:  # 未找到商品，已下架
+            print('-----ssss-----'*12)
+            print(db_goods)
+    print(goods_res)
+    print(sku_res)
+
+    goods_val = []
+    sku_val = []
+    for i in goods_res:
+        goods_val.append(tuple([i.get('goods_status'), i.get('goods_id')]))
+    for i in sku_res:
+        sku_val.append(tuple([i.get('goods_sku_price'), i.get('goods_sku_id')]))
+
+    goods_sql = 'UPDATE fa_wanlshop_goods SET fa_wanlshop_goods.status = %s WHERE fa_wanlshop_goods.id = %s'
+    # print(goods_val)
+    # connect_mysql(goods_sql, goods_val)
+
+    sku_sql = 'UPDATE fa_wanlshop_goods_sku SET fa_wanlshop_goods_sku.sale_price = %s WHERE fa_wanlshop_goods_sku.id = %s'
+    # print(sku_val)
+    # connect_mysql(sku_sql, sku_val)
+
+
+
+
+
+
+
 
 
 

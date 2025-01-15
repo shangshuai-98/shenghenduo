@@ -1,12 +1,32 @@
-from celery import Celery
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
-celery_app = Celery()
 
-@celery_app.task
-def run_task():
-    print('task-1')
-    return "success task "
+
+
+scheduler = BackgroundScheduler()
+
+
+def tick():
+    print('任务')
+    print('Tick! The time is: %s' )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -5,8 +5,8 @@ from fastapi import FastAPI
 # from fastapi.middleware.cors import CORSMiddleware
 from models import Item
 from script_tool.shangpinshangjia_v2 import get_goods_info
-from script_tool.celery_worker import celery_app as celery_app
-from script_tool.ruixing_order import get_order, kf_get_coupon_goods
+from script_tool.celery_worker import scheduler
+from script_tool.ruixing_order import get_order, kf_get_coupon_goods, kf_check_main
 from script_tool.KFC_replace_order import select_stores
 
 app = FastAPI()
@@ -56,10 +56,11 @@ def get_coffee_meal_code(data: dict):
 
 
 @app.get('/lxy/coffee/mealCode')
-def get_coffee_meal_code(pay_on):
-    # 914 915
-    # print(data)
-    result = get_order(pay_on)
+def get_coffee_meal_code(pay_on, order_id):
+    # print(pay_on)
+    # print(order_id)
+    params={'pay_on': pay_on, 'order_id': order_id}
+    result = get_order(params)
     if result:
         return {"code":1, "msg": 'success', 'data': result}
     return {"code":2, "msg": 'fail', 'data': result}
@@ -84,6 +85,12 @@ def get_KFC_city_code(gbCityCode, keyword):
     return {"code":2, "msg": 'fail', 'data': result}
 
 
+@app.on_event("startup")
+async def startup_event():
+    scheduler.add_job(kf_check_main, 'interval', seconds=60*30)
+    scheduler.start()
+
+
 @app.post("/post")
 def post_test():
     return {"method": "post方法"}
@@ -99,13 +106,7 @@ def delete_test():
     return {"method": "delete方法"}
 
 
-@app.get('/task')
-async def run_task():
-    print('111')
-    task = celery_app.send_task('celery_worker.run_task')
-    xx = task.wait()
-    print(xx)
-    return {"msg": "success"}
+
 
 
 
