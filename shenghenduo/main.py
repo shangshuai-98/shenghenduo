@@ -1,7 +1,7 @@
 import json
 import time, asyncio
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query, Body
 # from fastapi.middleware.cors import CORSMiddleware
 from models import Item
 from script_tool.shangpinshangjia_v2 import get_goods_info
@@ -85,10 +85,10 @@ def get_KFC_city_code(gbCityCode, keyword):
     return {"code":2, "msg": 'fail', 'data': result}
 
 
-@app.on_event("startup")
-async def startup_event():
-    scheduler.add_job(kf_check_main, 'interval', seconds=60*30)
-    scheduler.start()
+# @app.on_event("startup")
+# async def startup_event():
+#     scheduler.add_job(kf_check_main, 'interval', seconds=60*30)
+#     scheduler.start()
 
 
 @app.post("/post")
