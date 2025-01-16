@@ -87,8 +87,8 @@ def get_KFC_city_code(gbCityCode, keyword):
 
 @app.on_event("startup")
 async def startup_event():
-    print(os.getenv('WORKER_ID'))
-    if os.getenv('WORKER_ID') == 'primary':
+    print(os.getenv('GUNICORN_WORKER'))
+    if os.getenv('GUNICORN_WORKER') == 'primary':
         scheduler.add_job(kf_check_main, 'interval', seconds=60*30)
         scheduler.start()
 
