@@ -1,5 +1,5 @@
 import json
-import time, asyncio
+import time, asyncio, os
 
 from fastapi import FastAPI, Query, Body
 # from fastapi.middleware.cors import CORSMiddleware
@@ -87,8 +87,9 @@ def get_KFC_city_code(gbCityCode, keyword):
 
 @app.on_event("startup")
 async def startup_event():
-    scheduler.add_job(kf_check_main, 'interval', seconds=60*30)
-    scheduler.start()
+    if os.getenv('WORKER_ID') == 'primary':
+        scheduler.add_job(kf_check_main, 'interval', seconds=60*30)
+        scheduler.start()
 
 
 @app.post('/lxy/taobao/messagetest')
