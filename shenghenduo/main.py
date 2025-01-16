@@ -91,6 +91,26 @@ async def startup_event():
     scheduler.start()
 
 
+@app.post('/lxy/taobao/messagetest')
+def handle_message(topic: str = Query(...), pub_time: int = Query(...), sign: str = Query(...), data: dict = Body(...)):
+    # print(topic)
+    # print(pub_time)
+    # print(sign)
+    print(data)
+    tid = data.get('tid')  # 主订单ID
+    oid = data.get('oid')  # 子订单ID
+    type = data.get('type')  # 交易类型
+    status = data.get('status')  # 交易状态
+    seller_nick = data.get('seller_nick')  # 卖家昵称
+    buyer_nick = data.get('buyer_nick')  # 买家昵称
+    buyer_open_uid = data.get('buyer_open_uid')  # 买家OpenUid
+    payment = data.get('payment')  # 实付金额
+
+
+
+    return {'code': 1000, 'data': '成功'}
+
+
 @app.post("/post")
 def post_test():
     return {"method": "post方法"}
