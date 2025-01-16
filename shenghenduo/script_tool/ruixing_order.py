@@ -660,10 +660,10 @@ def kf_check_main():
                 goods_res_dict['goods_id'] = db_goods.get('goods_id')
                 goods_res_dict['goods_status'] = db_status.get(goods_status.get('status'))
                 goods_res_dict['goods_price'] = goods_status.get('money') + 0.5
-            if goods_status.get('money') + 0.5 > db_goods.get('goods_price'):
-                goods_res_dict['goods_id'] = db_goods.get('goods_id')
-                goods_res_dict['goods_status'] = db_status.get(goods_status.get('status'))
-                goods_res_dict['goods_price'] = goods_status.get('money') + 0.5
+            # if goods_status.get('money') + 0.5 > db_goods.get('goods_price'):
+            #     goods_res_dict['goods_id'] = db_goods.get('goods_id')
+            #     goods_res_dict['goods_status'] = db_status.get(goods_status.get('status'))
+            #     goods_res_dict['goods_price'] = goods_status.get('money') + 0.5
             if goods_status.get('sku_money'):
                 if goods_status.get('sku_money') + 0.5 > db_goods.get('goods_sku_price'):
                     sku_res_dict['goods_sku_id'] = db_goods.get('goods_sku_id')
