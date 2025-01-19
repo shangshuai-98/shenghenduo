@@ -651,6 +651,12 @@ def get_kf_goods(weigh, sn):
                         'sku_status': sku_status,  # 规格状态
                         'sku_money': sku_money     # 规格价格
                     })
+        name = response_text.get('data')[0].get('name')
+        if '瑞幸' in name:
+            res.update({
+                'sku_status': status,  # 规格状态
+                'sku_money': money  # 规格价格
+            })
     else:
         # 下架
         res.update({
