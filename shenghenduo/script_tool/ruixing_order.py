@@ -644,6 +644,11 @@ def get_kf_goods(weigh, sn):
                         'sku_status': sku_status,  # 规格状态
                         'sku_money': sku_money     # 规格价格
                     })
+    else:
+        # 下架
+        res.update({
+            'status': 2,  # 商品状态
+        })
     print(res)
     return res
 
@@ -663,7 +668,7 @@ def kf_check_main():
             if db_status.get(goods_status.get('status')) != db_goods.get('goods_status'):  # 判断商品状态上架下架
                 goods_res_dict['goods_id'] = db_goods.get('goods_id')
                 goods_res_dict['goods_status'] = db_status.get(goods_status.get('status'))
-                goods_res_dict['goods_price'] = goods_status.get('money') + 0.5
+                # goods_res_dict['goods_price'] = goods_status.get('money') + 0.5
             # if goods_status.get('money') + 0.5 > db_goods.get('goods_price'):
             #     goods_res_dict['goods_id'] = db_goods.get('goods_id')
             #     goods_res_dict['goods_status'] = db_status.get(goods_status.get('status'))
@@ -689,13 +694,15 @@ def kf_check_main():
     for i in sku_res:
         sku_val.append(tuple([i.get('goods_sku_price'), i.get('goods_sku_id')]))
 
-    goods_sql = 'UPDATE fa_wanlshop_goods SET fa_wanlshop_goods.status = %s WHERE fa_wanlshop_goods.id = %s'
-    print(goods_val)
-    connect_mysql(goods_sql, goods_val)
+    if goods_val:
+        goods_sql = 'UPDATE fa_wanlshop_goods SET fa_wanlshop_goods.status = %s WHERE fa_wanlshop_goods.id = %s'
+        print(goods_val)
+        connect_mysql(goods_sql, goods_val)
 
-    sku_sql = 'UPDATE fa_wanlshop_goods_sku SET fa_wanlshop_goods_sku.sale_price = %s WHERE fa_wanlshop_goods_sku.id = %s'
-    print(sku_val)
-    connect_mysql(sku_sql, sku_val)
+    if sku_val:
+        sku_sql = 'UPDATE fa_wanlshop_goods_sku SET fa_wanlshop_goods_sku.sale_price = %s WHERE fa_wanlshop_goods_sku.id = %s'
+        print(sku_val)
+        connect_mysql(sku_sql, sku_val)
 
 
 
