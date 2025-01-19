@@ -430,6 +430,62 @@ def luffi_down_order(code, deptId, product_name, sku, count, price, remarks, cit
                     print(e)
 
 
+# 快发平台买优惠券
+def kf_get_coupon_goods(params):
+    print(params)
+    word = params.get('word')
+    order_id = params.get('order_id')
+    url = "https://test.haomachina.cn/api/Coupon/getGoods"
+    payload = json.dumps({
+        "page": 1,
+        "goodsType": 1,
+        "type": 2,
+        "word": word
+    })
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+        'Host': 'test.haomachina.cn',
+        'Connection': 'keep-alive'
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+
+    # print(json.loads(response.text))
+    response_text = json.loads(response.text)
+    # response_text = {'allCount': 1, 'allPage': 1, 'code': 1000, 'data': [{'id': 2257, 'number': 1836, 'name': '①号货源 23元面值  瑞幸咖啡 ', 'price': 0, 'money': 8.13, 'type': 1, 'day': 0, 'keyId': 8, 'status': 1, 'multiple': 1, 'isRepeat': 0, 'skuType': 0}], 'msg': '获取成功'}
+    data = response_text.get('data')
+    print(data)
+    if data:
+        pwd = ''
+        for i in data:
+            if int(i.get('status')) != 1:
+                continue
+            if '瑞幸' in i.get('name'):
+                print(i.get('id'))
+                url = "https://guchi.haomachina.cn/api/Coupon/addOrder"
+                payload = json.dumps({
+                    "id": i.get('id'),
+                    "count": 1,
+                    "payType": 0
+                })
+                # print(payload)
+                response = requests.request("POST", url, headers=headers, data=payload)
+                response_text = json.loads(response.text)
+                # response_text = {'cards': [{'number': '', 'pwd': 'https://luckin.hqyi.net/#/?code=JBk4BJBbBupeqpNTlf', 'time': '', 'gifts': ''}], 'code': 1000, 'id': 155364, 'msg': '购买成功', 'number': '20241228151832574'}
+                # print(response_text)
+                cards = response_text.get('cards')
+                pwd = cards[0].get('pwd')
+                print(pwd)
+                break
+        if pwd:
+            return pwd
+        else:
+            return ''
+    else:
+        return ''
+
+
 # data = {
 #     "code": "u45JcPg2inN7wY8QcN",
 #     "deptId": 390716,
@@ -489,7 +545,11 @@ def get_order(params):
         brand = data[0][0]
         if brand == '瑞幸咖啡':
             if not code_url:
-                code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
+                sql = f'SELECT weigh, sn FROM fa_wanlshop_goods_sku WHERE id = {goods_sku_id}'
+                data = connect_mysql(sql, type=1)
+                word = data[0][0]
+                sn = data[0][1]
+                code_url = kf_get_coupon_goods({'word': word})
                 sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
                 val = [tuple([code_url, order_id])]
                 connect_mysql(sql, val)
@@ -523,66 +583,11 @@ def get_order(params):
             return result
     else:
         return {'msg': '订单未支付或不存在'}
-# get_order({'order_id': 914})
-
-# 快发平台买优惠券
-def kf_get_coupon_goods(params):
-    print(params)
-    face_price = params.get('face_price')
-    order_id = params.get('order_id')
-    url = "https://test.haomachina.cn/api/Coupon/getGoods"
-    payload = json.dumps({
-        "page": 1,
-        "goodsType": 1,
-        "type": 2,
-        "word": f'{face_price}元'
-    })
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-        'Content-Type': 'application/json',
-        'Accept': '*/*',
-        'Host': 'test.haomachina.cn',
-        'Connection': 'keep-alive'
-    }
-    response = requests.request("POST", url, headers=headers, data=payload)
-
-    # print(json.loads(response.text))
-    response_text = json.loads(response.text)
-    # response_text = {'allCount': 1, 'allPage': 1, 'code': 1000, 'data': [{'id': 2257, 'number': 1836, 'name': '①号货源 23元面值  瑞幸咖啡 ', 'price': 0, 'money': 8.13, 'type': 1, 'day': 0, 'keyId': 8, 'status': 1, 'multiple': 1, 'isRepeat': 0, 'skuType': 0}], 'msg': '获取成功'}
-    data = response_text.get('data')
-    if data:
-        pwd = ''
-        for i in data:
-            if int(i.get('status')) != 1:
-                continue
-            if '瑞幸' in i.get('name') and str(face_price) in i.get('name'):
-                print(i.get('id'))
-                url = "https://guchi.haomachina.cn/api/Coupon/addOrder"
-                payload = json.dumps({
-                    "id": i.get('id'),
-                    "count": 1,
-                    "payType": 0
-                })
-                # print(payload)
-                response = requests.request("POST", url, headers=headers, data=payload)
-                response_text = json.loads(response.text)
-                # response_text = {'cards': [{'number': '', 'pwd': 'https://luckin.hqyi.net/#/?code=JBk4BJBbBupeqpNTlf', 'time': '', 'gifts': ''}], 'code': 1000, 'id': 155364, 'msg': '购买成功', 'number': '20241228151832574'}
-                # print(response_text)
-                cards = response_text.get('cards')
-                pwd = cards[0].get('pwd')
-                print(pwd)
-                break
-        if pwd:
-            return pwd
-        else:
-            return ''
-    else:
-        return ''
 
 
+# get_order({'order_id': 979})
 
 
-# kf_get_coupon_goods(29)
 
 
 
