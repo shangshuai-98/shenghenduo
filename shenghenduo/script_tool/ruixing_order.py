@@ -464,63 +464,65 @@ def get_order(params):
     else:
         order_id = orderId
 
-    sql = f'SELECT fa_wanlshop_order.couponcode, fa_wanlshop_order.store_id, fa_wanlshop_order.city_id, fa_wanlshop_order.store_name, fa_wanlshop_order_goods.market_price, fa_wanlshop_order_goods.difference, fa_wanlshop_order_goods.title, fa_wanlshop_order_goods.number, fa_wanlshop_order_goods.goods_id, fa_wanlshop_order_goods.goods_sku_id FROM fa_wanlshop_order INNER JOIN fa_wanlshop_order_goods on fa_wanlshop_order.id = fa_wanlshop_order_goods.order_id WHERE fa_wanlshop_order.id = {order_id}'
+    sql = f'SELECT fa_wanlshop_order.couponcode, fa_wanlshop_order.store_id, fa_wanlshop_order.city_id, fa_wanlshop_order.store_name, fa_wanlshop_order_goods.market_price, fa_wanlshop_order_goods.difference, fa_wanlshop_order_goods.title, fa_wanlshop_order_goods.number, fa_wanlshop_order_goods.goods_id, fa_wanlshop_order_goods.goods_sku_id FROM fa_wanlshop_order INNER JOIN fa_wanlshop_order_goods on fa_wanlshop_order.id = fa_wanlshop_order_goods.order_id WHERE fa_wanlshop_order.id = {order_id} and fa_wanlshop_order.state not in (1, 7)'
     data = connect_mysql(sql, type=1)
     # data = (('https://luckin.hqyi.net/#/?code=aSjBR0kpdxAsm4Qs8s', 385361, '26.00', '热,不另外加糖,大杯 16oz,含轻咖', '轻轻茉莉', 1),)
     # data = (('https://luckin.hqyi.net/#/?code=JBk4BJBbBupeqpNTlf', 385361, '29.00', '冰,标准甜', '生椰拿铁', 1),)
     print(data)
-    code_url = data[0][0]
-    deptId = data[0][1]
-    city_id = data[0][2]
-    store_name = data[0][3]
-    price = float(data[0][4])
-    sku = data[0][5]
-    product_name = data[0][6]
-    count = data[0][7]
-    goods_id = data[0][8]
-    goods_sku_id = data[0][9]
-    # todo
-    remarks = ''
-    sql = f'SELECT fa_wanlshop_brand.`name` FROM fa_wanlshop_goods JOIN fa_wanlshop_brand ON fa_wanlshop_goods.brand_id = fa_wanlshop_brand.id WHERE fa_wanlshop_goods.id = {goods_id}'
-    data = connect_mysql(sql, type=1)
-    print(data)
-    brand = data[0][0]
     result = ''
-    if brand == '瑞幸咖啡':
-        if not code_url:
-            code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
-            sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
-            val = [tuple([code_url, order_id])]
-            connect_mysql(sql, val)
+    if data:
+        code_url = data[0][0]
+        deptId = data[0][1]
+        city_id = data[0][2]
+        store_name = data[0][3]
+        price = float(data[0][4])
+        sku = data[0][5]
+        product_name = data[0][6]
+        count = data[0][7]
+        goods_id = data[0][8]
+        goods_sku_id = data[0][9]
+        # todo
+        remarks = ''
+        sql = f'SELECT fa_wanlshop_brand.`name` FROM fa_wanlshop_goods JOIN fa_wanlshop_brand ON fa_wanlshop_goods.brand_id = fa_wanlshop_brand.id WHERE fa_wanlshop_goods.id = {goods_id}'
+        data = connect_mysql(sql, type=1)
+        print(data)
+        brand = data[0][0]
+        if brand == '瑞幸咖啡':
+            if not code_url:
+                code_url = kf_get_coupon_goods({'face_price': f'{int(price)}元'})
+                sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
+                val = [tuple([code_url, order_id])]
+                connect_mysql(sql, val)
 
-        if 'luckin.hqyi' in code_url:
-            code = code_url.split('code=')[1]
-            result = luck_down_order(sku, count, code, deptId, product_name, price, remarks, city_id, store_name)
-        elif 'd.luffi' in code_url:
-            code = code_url.split('key=')[1]
-            result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks, city_id, store_name)
-    elif brand == '肯德基':
-        if not code_url:
-            sql = f'SELECT weigh, sn FROM fa_wanlshop_goods_sku WHERE id = {goods_sku_id}'
-            data = connect_mysql(sql, type=1)
-            word = data[0][0]
-            sn = data[0][1]
-            code_url = kf_get_KFC_coupon_goods(word, sn)
-            sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
-            val = [tuple([code_url, order_id])]
+            if 'luckin.hqyi' in code_url:
+                code = code_url.split('code=')[1]
+                result = luck_down_order(sku, count, code, deptId, product_name, price, remarks, city_id, store_name)
+            elif 'd.luffi' in code_url:
+                code = code_url.split('key=')[1]
+                result = luffi_down_order(code, deptId, product_name, sku, count, price, remarks, city_id, store_name)
+        elif brand == '肯德基':
+            if not code_url:
+                sql = f'SELECT weigh, sn FROM fa_wanlshop_goods_sku WHERE id = {goods_sku_id}'
+                data = connect_mysql(sql, type=1)
+                word = data[0][0]
+                sn = data[0][1]
+                code_url = kf_get_KFC_coupon_goods(word, sn)
+                sql = f'UPDATE fa_wanlshop_order SET couponcode = %s WHERE id = %s'
+                val = [tuple([code_url, order_id])]
+                connect_mysql(sql, val)
+            result = exchange_coupons(deptId, store_name, code_url)
+        print(result)
+        if result and result.get('code'):
+            result['order_id'] = order_id
+            result['brand'] = brand
+            sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime = %s, state = %s WHERE id = %s'
+            val = [tuple([json.dumps(result), 2, int(time.time()), 6, order_id])]
             connect_mysql(sql, val)
-        result = exchange_coupons(deptId, store_name, code_url)
-
-    print(result)
-    if result and result.get('code'):
-        result['order_id'] = order_id
-        result['brand'] = brand
-        sql = f'UPDATE fa_wanlshop_order SET changecode = %s, couponstate = %s, coupontime = %s, state = %s WHERE id = %s'
-        val = [tuple([json.dumps(result), 2, int(time.time()), 6, order_id])]
-        connect_mysql(sql, val)
-        return result
+            return result
+        else:
+            return result
     else:
-        return result
+        return {'msg': '订单未支付或不存在'}
 # get_order({'order_id': 914})
 
 # 快发平台买优惠券
