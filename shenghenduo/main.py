@@ -2,11 +2,12 @@ import json
 import time, asyncio, os
 
 from fastapi import FastAPI, Query, Body
+from apscheduler.triggers.cron import CronTrigger
 # from fastapi.middleware.cors import CORSMiddleware
 from models import Item
 from script_tool.shangpinshangjia_v2 import get_goods_info
 from script_tool.celery_worker import scheduler
-from script_tool.ruixing_order import get_order, kf_get_coupon_goods, kf_check_main
+from script_tool.ruixing_order import get_order, kf_get_coupon_goods, kf_check_main, update_goods_price, kf_ruixing_goods
 from script_tool.KFC_replace_order import select_stores
 
 app = FastAPI()
@@ -89,7 +90,21 @@ def get_KFC_city_code(gbCityCode, keyword):
 async def startup_event():
     # print(os.getenv('GUNICORN_WORKER'))
     # if os.getenv('GUNICORN_WORKER') == 'primary':
-    scheduler.add_job(kf_check_main, 'interval', seconds=60*30)
+    scheduler.add_job(
+        kf_check_main, 'interval', seconds=60*30
+    )
+    scheduler.add_job(
+        func=kf_ruixing_goods,
+        trigger=CronTrigger(minute='25,50'),
+        id='kf_ruixing_goods_job',  # 为任务设置一个唯一标识符
+        name='Update goods weigh',  # 为任务设置一个名称
+    )
+    scheduler.add_job(
+        func=update_goods_price,
+        trigger=CronTrigger(hour=1, minute=0),
+        id='update_goods_price_job',  # 为任务设置一个唯一标识符
+        name='Update goods price',  # 为任务设置一个名称
+    )
     scheduler.start()
 
 
