@@ -179,7 +179,7 @@ def get_store_menu(code, deptId, product_name):
                 name = name.replace('(', '（')
                 name = name.replace(')', '）')
                 productId = goods_info.get('productId')
-                if productId in product_id_list and product_name in name:
+                if productId in product_id_list:
                     print(name)
                     print(productId)
                     return productId
@@ -585,7 +585,7 @@ def get_order(params):
         return {'msg': '订单未支付或不存在'}
 
 
-# get_order({'order_id': 979})
+# get_order({'order_id': 981})
 
 
 
@@ -705,7 +705,7 @@ def kf_check_main():
     for i in goods_res:
         goods_val.append(tuple([i.get('goods_status'), i.get('goods_id')]))
     for i in sku_res:
-        sku_val.append(tuple([i.get('goods_sku_price'), i.get('goods_sku_id')]))
+        sku_val.append(tuple([i.get('goods_sku_price'), i.get('goods_sku_price'), i.get('goods_sku_price'), i.get('goods_sku_id')]))
 
     if goods_val:
         goods_sql = 'UPDATE fa_wanlshop_goods SET fa_wanlshop_goods.status = %s WHERE fa_wanlshop_goods.id = %s'
@@ -713,7 +713,7 @@ def kf_check_main():
         connect_mysql(goods_sql, goods_val)
 
     if sku_val:
-        sku_sql = 'UPDATE fa_wanlshop_goods_sku SET fa_wanlshop_goods_sku.sale_price = %s WHERE fa_wanlshop_goods_sku.id = %s'
+        sku_sql = 'UPDATE fa_wanlshop_goods_sku SET fa_wanlshop_goods_sku.sale_price = %s, fa_wanlshop_goods_sku.dijia_price = %s, fa_wanlshop_goods_sku.price = %s WHERE fa_wanlshop_goods_sku.id = %s'
         print(sku_val)
         connect_mysql(sku_sql, sku_val)
 
