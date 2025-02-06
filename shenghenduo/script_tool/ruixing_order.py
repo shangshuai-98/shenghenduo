@@ -791,6 +791,287 @@ def kf_ruixing_goods():
         connect_mysql(update_sql, val)
 
 
+def kf_get_goods_detail(id):
+    url = "https://guchi.haomachina.cn/api/Coupon/getGoodsDetail"
+    payload = {
+        "id": id
+    }
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        'Accept': '*/*',
+        'Host': 'guchi.haomachina.cn',
+        'Connection': 'keep-alive'
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+    response_text = json.loads(response.text)
+    return response_text
+
+
+def synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path):
+    # shop_category_id = 47  # 店铺内类目
+    # category_id = 2444  # 商品类目
+    # image_path = '/uploads/20241224/612110679eea6faf2de20c823b1fc395.jpg'
+    for goods_info in response_text.get('data'):
+        print(goods_info)
+        # 查询数据库，商品是否存在
+        name = goods_info.get('name')
+        print(name)
+        sql = f'SELECT * FROM fa_wanlshop_goods WHERE source_platform = 6 AND shop_id = 5 AND category_id = {category_id} AND title = "{name}"'
+        db_list = connect_mysql(sql, type=1)
+        print(db_list)
+        if db_list:  # 有商品，同步状态，价格
+            goods_id = db_list[0][0]
+            db_price = db_list[0][21]
+            db_status = db_list[0][35]
+
+            money = goods_info.get('money') + 0.5
+            status = 'normal' if goods_info.get('status') == 1 else 'hidden'
+            if float(db_price) != money or db_status != status:  # 如果价格或者状态不一致，修改数据
+                update_sql = "UPDATE fa_wanlshop_goods SET status = %s, price = %s WHERE id = %s"
+                goods_val = [(status, money, goods_id)]
+                connect_mysql(update_sql, goods_val)
+        else:
+            # 没有这个商品，添加这个商品
+            money = goods_info.get('money') + 0.5
+            status = 'normal' if goods_info.get('status') == 1 else 'hidden'
+            insert_sql = 'INSERT INTO fa_wanlshop_goods(shop_id, shop_category_id, category_id, brand_id, title, image, images, description, content, freight_id, price, createtime, updatetime, status, source_platform, ensure) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            goods_val = [(5, shop_category_id, category_id, 7, goods_info.get('name'), image_path, image_path, '限时低价    售后支持', f'<img src="https://qiniu.haomachina.cn{image_path}" alt="" />', 3, money, int(time.time()), int(time.time()), status, 6, '1、消费者权益保障 若产生交易纠纷，用户可申请平台介入协助。 2、客服应答 官方会话能力，咨询方便，消息不易错过。')]
+            goods_id = connect_mysql(insert_sql, goods_val)
+        if goods_info.get('skuType') == 1:  # 多规格
+            goods_detail = kf_get_goods_detail(goods_info.get('id'))
+            # goods_detail = {'code': 1000, 'data': [{'id': 2562, 'number': 2138, 'name': '芝士鸡肉帕尼尼+豆浆二件套 (05:00 - 10:30)', 'price': 0, 'money': 6.58, 'type': 1, 'day': 0, 'min': 1, 'max': 100, 'note': '', 'desc': '', 'describe': '独家功能 1.支持电商对接用户申请退款自动封卡退款 2.支持拿卡售后自动退款-我的订单-申请退款-自动封卡退款', 'accountName': '', 'accountType': 1, 'accountType1': 0, 'accountDesc': '', 'accountContent': '', 'count': 4995, 'TagName': ' 我的订单-申请退款-自动封卡退款', 'TagColor': '', 'imgs': [{'img': 'http://vip.kuaifaquanyi.com/attached/images/10957/public/f026aba33b49474db0f36ef9413c4f93.png'}], 'discounts': None, 'templates': None, 'mainKey': 0, 'status': 2, 'multiple': 1, 'isRepeat': 1, 'skuType': 1, 'skus': [{'name': '套餐1', 'data': [{'name': 'C芝士鸡肉帕尼尼'}]}, {'name': '套餐2', 'data': [{'name': '醇豆浆(中|热)'}, {'name': '醇豆浆(冰)'}, {'name': '萌泡泡牛奶(中|热)'}, {'name': '百事(中|冰)'}, {'name': '百事(大|冰)'}]}], 'skuDetails': [{'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '醇豆浆(中|热)'}], 'status': 1, 'sku': '100009583-100002941', 'money': 6.58, 'count': 999}, {'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '醇豆浆(冰)'}], 'status': 1, 'sku': '100009583-100006599', 'money': 7.18, 'count': 999}, {'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '萌泡泡牛奶(中|热)'}], 'status': 1, 'sku': '100009583-100003684', 'money': 9.58, 'count': 999}, {'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '百事(中|冰)'}], 'status': 1, 'sku': '100009583-100006672', 'money': 7.78, 'count': 999}, {'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '百事(大|冰)'}], 'status': 1, 'sku': '100009583-100006673', 'money': 8.98, 'count': 999}]}], 'msg': '获取成功'}
+            # print(goods_detail)
+            spu_val = []
+            # [{'name': '套餐1', 'data': [{'name': 'C芝士鸡肉帕尼尼'}]}, {'name': '套餐2', 'data': [{'name': '醇豆浆(中|热)'}, {'name': '醇豆浆(冰)'}, {'name': '萌泡泡牛奶(中|热)'}, {'name': '百事(中|冰)'}, {'name': '百事(大|冰)'}]}]
+            for spu_info in goods_detail.get('data')[0].get('skus'):
+                name = spu_info.get('name')
+                item = ','.join([i.get('name') for i in spu_info.get('data')])
+                select_sql = f'SELECT * FROM fa_wanlshop_goods_spu WHERE goods_id = {goods_id} AND name = "{name}" AND item = "{item}"'
+                data = connect_mysql(select_sql, type=1)
+                if data:
+                    pass
+                else:
+                    spu_val.append((goods_id, name, item, int(time.time()), int(time.time())))
+            if spu_val:
+                insert_sql = 'INSERT INTO fa_wanlshop_goods_spu(goods_id, name, item, createtime, updatetime)VALUES(%s, %s, %s, %s, %s)'
+                connect_mysql(insert_sql, spu_val)
+            # [{'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '醇豆浆(中|热)'}], 'status': 1, 'sku': '100009583-100002941', 'money': 6.58, 'count': 999}, {'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '醇豆浆(冰)'}], 'status': 1, 'sku': '100009583-100006599', 'money': 7.18, 'count': 999}, {'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '萌泡泡牛奶(中|热)'}], 'status': 1, 'sku': '100009583-100003684', 'money': 9.58, 'count': 999}, {'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '百事(中|冰)'}], 'status': 1, 'sku': '100009583-100006672', 'money': 7.78, 'count': 999}, {'names': [{'title': '套餐1', 'value': 'C芝士鸡肉帕尼尼'}, {'title': '套餐2', 'value': '百事(大|冰)'}], 'status': 1, 'sku': '100009583-100006673', 'money': 8.98, 'count': 999}]
+            sku_val = []
+            # 查产品id，如果没有一条记录，说明是第一次入库，不需要再每次查询确认
+            select_sql = f'SELECT NOT EXISTS(SELECT 1 FROM fa_wanlshop_goods_sku WHERE weigh = "{goods_info.get('id')}")'
+            data = connect_mysql(select_sql, type=1)
+            if data[0][0] == 1:  # 没有一条记录
+                for sku_info in goods_detail.get('data')[0].get('skuDetails'):
+                    # print(sku_info)
+                    sn = sku_info.get('sku')
+                    money = sku_info.get('money') + 0.5
+                    difference = ','.join([i.get('value') for i in sku_info.get('names')])
+                    sku_val.append((goods_id, difference, money, sku_info.get('count'), goods_info.get('id'), sn, int(time.time()), int(time.time()), money, money))
+            else:
+                # 查全部的sku
+                select_sql = f"SELECT price, sn FROM fa_wanlshop_goods_sku WHERE weigh = '{goods_info.get('id')}' AND state = '0' AND goods_id = {goods_id}"
+                sku_data_list = connect_mysql(select_sql, type=1)
+                sku_data_list = list(sku_data_list)
+                for sku_info in goods_detail.get('data')[0].get('skuDetails'):
+                    sn = sku_info.get('sku')
+                    money = sku_info.get('money') + 0.5
+                    for db_sku_data in sku_data_list:
+                        # print(db_sku_data)
+                        db_price = db_sku_data[0]
+                        db_sn = db_sku_data[1]
+                        if db_sn == sn:  # sku存在
+                            if float(db_price) != money:  # 如果价格不一致，修改数据
+                                sku_sql = 'UPDATE fa_wanlshop_goods_sku SET fa_wanlshop_goods_sku.sale_price = %s, fa_wanlshop_goods_sku.dijia_price = %s, fa_wanlshop_goods_sku.price = %s WHERE fa_wanlshop_goods_sku.id = %s'
+                                connect_mysql(sku_sql, [(money, money, money, data[0][0])])
+                            sku_data_list.remove(db_sku_data)
+                            break
+            if sku_val:
+                insert_sql = 'INSERT INTO fa_wanlshop_goods_sku(goods_id, difference, price, stock, weigh, sn, createtime, updatetime, dijia_price, sale_price)VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+                connect_mysql(insert_sql, sku_val)
+        else:  # 单规格
+            # spu
+            item = goods_info.get('name').split(' ')[0]
+            select_sql = f'SELECT * FROM fa_wanlshop_goods_spu WHERE goods_id = {goods_id} AND name = "默认" AND item = "{item}"'
+            data = connect_mysql(select_sql, type=1)
+            if data:
+                pass
+            else:
+                insert_sql = 'INSERT INTO fa_wanlshop_goods_spu(goods_id, name, item, createtime, updatetime)VALUES(%s, %s, %s, %s, %s)'
+                connect_mysql(insert_sql, [(goods_id, "默认", item, int(time.time()), int(time.time()))])
+            # sku
+            money = goods_info.get('money') + 0.5
+            difference = goods_info.get('name').split(' ')[0]
+            select_sql = f"SELECT * FROM fa_wanlshop_goods_sku WHERE weigh = '{goods_info.get('id')}' AND state = '0' AND goods_id = {goods_id}"
+            data = connect_mysql(select_sql, type=1)
+            if data:  # sku存在
+                # print(data)
+                db_price = data[0][4]
+                if float(db_price) != money:  # 如果价格不一致，修改数据
+                    sku_sql = 'UPDATE fa_wanlshop_goods_sku SET fa_wanlshop_goods_sku.sale_price = %s, fa_wanlshop_goods_sku.dijia_price = %s, fa_wanlshop_goods_sku.price = %s WHERE fa_wanlshop_goods_sku.id = %s'
+                    connect_mysql(sku_sql, [(money, money, money, data[0][0])])
+            else:
+                insert_sql = 'INSERT INTO fa_wanlshop_goods_sku(goods_id, difference, price, stock, weigh, createtime, updatetime, dijia_price, sale_price)VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)'
+                connect_mysql(insert_sql, [(goods_id, difference, money, 999, goods_info.get('id'), int(time.time()), int(time.time()), money, money)])
+
+
+def kf_coupon_getDirs():
+
+    goods_type_id_list = ['141']
+    goods_name_list = ['瑞幸咖啡', 'KFC早餐', 'KFC下午茶', 'KFC超值套餐', 'KFC小食套餐', 'KFC疯狂星期四', 'KFC疯狂周末', 'KFC饮品', 'KFC咖啡', 'KFC肯悦咖啡', 'KFC冰淇淋', 'KFC炸鸡节', 'KFC蛋挞甜品', 'KFC全鸡']
+
+    url = "https://guchi.haomachina.cn/api/Coupon/getDirs"
+
+    payload = {}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        'Accept': '*/*',
+        'Host': 'guchi.haomachina.cn',
+        'Connection': 'keep-alive'
+    }
+
+    response = requests.request("GET", url, headers=headers, data=payload)
+    response_text = json.loads(response.text)
+    # print(response_text)
+    for i in response_text.get('data2'):
+        if i.get('id') in goods_type_id_list:
+            print(i.get('data'))
+            for n in i.get('data'):
+                if n.get('name') in goods_name_list:
+                    print(n.get('id'))
+                    print(n.get('name'))
+                    url = "https://guchi.haomachina.cn/api/Coupon/getGoods"
+
+                    payload = {
+                        "type": 1,
+                        "word": n.get('id')
+                    }
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+                        'Accept': '*/*',
+                        'Host': 'guchi.haomachina.cn',
+                        'Connection': 'keep-alive'
+                    }
+
+                    response = requests.request("POST", url, headers=headers, data=payload)
+                    response_text = json.loads(response.text)
+                    # print(response_text)
+                    if n.get('name') == '瑞幸咖啡':
+                        price_dict = {}
+                        for rx_goods in response_text.get('data'):
+                            name = rx_goods.get('name')
+                            if '面值' in name:
+                                price_dict.update({name.split(' ')[1]: str(rx_goods.get('id'))})
+                        print(price_dict)
+                        val = []
+                        sql = f'SELECT fa_wanlshop_goods_sku.id, fa_wanlshop_goods_sku.weigh, fa_wanlshop_goods_sku.market_price FROM fa_wanlshop_goods JOIN fa_wanlshop_goods_sku ON fa_wanlshop_goods.id = fa_wanlshop_goods_sku.goods_id WHERE fa_wanlshop_goods_sku.state = "0" AND fa_wanlshop_goods.source_platform = 6 AND fa_wanlshop_goods.brand_id = 5 AND fa_wanlshop_goods.shop_id = 5'
+                        db_rx_list = connect_mysql(sql, type=1)
+                        for i in db_rx_list:
+                            # print(i)
+                            if price_dict.get(f'{int(i[2])}元面值') and price_dict.get(f'{int(i[2])}元面值') != i[1]:
+                                # print(i)
+                                val.append((price_dict.get(f'{int(i[2])}元面值'), i[0]))
+                        if val:
+                            update_sql = 'UPDATE fa_wanlshop_goods_sku SET weigh = %s WHERE id = %s'
+                            print(val)
+                            connect_mysql(update_sql, val)
+                    elif n.get('name') == 'KFC早餐':
+                        shop_category_id = 44  # 店铺内类目
+                        category_id = 2447  # 商品类目
+                        image_path = '/uploads/20241222/84dcb1f2d8a6f06c05e8479609c0b2e5.jpg'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    elif n.get('name') == 'KFC下午茶':
+                        # 下午茶
+                        shop_category_id = 46  # 店铺内类目
+                        category_id = 2445  # 商品类目
+                        image_path = '/uploads/20241223/42474ef2ed05d5ca8f2ee123ac7650de.jpg'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    elif n.get('name') == 'KFC超值套餐':
+                        # 超值套餐
+                        shop_category_id = 47  # 店铺内类目
+                        category_id = 2444  # 商品类目
+                        image_path = '/uploads/20241224/612110679eea6faf2de20c823b1fc395.jpg'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    elif n.get('name') == 'KFC小食套餐':
+                        # 小食套餐
+                        shop_category_id = 48  # 店铺内类目
+                        category_id = 2443  # 商品类目
+                        image_path = '/uploads/20241223/f9aebe51a4d21d22a074e4471ff8dee9.jpg'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    elif n.get('name') == 'KFC疯狂星期四':
+                        # 疯狂星期四
+                        shop_category_id = 49  # 店铺内类目
+                        category_id = 2442  # 商品类目
+                        image_path = '/uploads/20241223/a034c8e3e6a5d5bcd97e12c540dfe7dd.jpg'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    # elif n.get('name') == 'KFC疯狂周末':
+                    #     # 疯狂周末 一个套餐 4个spu 17280个sku
+                    #     shop_category_id =   # 店铺内类目
+                    #     category_id =   # 商品类目
+                    #     image_path = ''
+                    #     synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    # elif n.get('name') == 'KFC饮品':
+                    #     # 饮品
+                    #     shop_category_id =   # 店铺内类目
+                    #     category_id =   # 商品类目
+                    #     image_path = ''
+                    #     synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    elif n.get('name') == 'KFC咖啡':
+                        # 咖啡
+                        shop_category_id = 52  # 店铺内类目
+                        category_id = 2439  # 商品类目
+                        image_path = '/uploads/20241223/c0a433c8311f5f38de5b1a9779bd1998.png'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    elif n.get('name') == 'KFC肯悦咖啡':
+                        # 肯悦咖啡
+                        shop_category_id = 52  # 店铺内类目
+                        category_id = 2438  # 商品类目
+                        image_path = '/uploads/20241223/aa55a0197525be7659b75ad02459616c.png'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    elif n.get('name') == 'KFC冰淇淋':
+                        # 冰淇淋
+                        shop_category_id = 54  # 店铺内类目
+                        category_id = 2437  # 商品类目
+                        image_path = '/uploads/20241223/2b8214df86af9ce753dee6c60e317eab.png'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    elif n.get('name') == 'KFC炸鸡节':
+                        # 炸鸡节
+                        shop_category_id = 55  # 店铺内类目
+                        category_id = 2436  # 商品类目
+                        image_path = '/uploads/20241223/3fc01140231687a4d7cccb48eed90750.jpg'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    elif n.get('name') == 'KFC蛋挞甜品':
+                        # 蛋挞甜品
+                        shop_category_id = 56  # 店铺内类目
+                        category_id = 2435  # 商品类目
+                        image_path = '/uploads/20241223/3fc01140231687a4d7cccb48eed90750.jpg'
+                        synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+                    # elif n.get('name') == 'KFC全鸡':
+                    #     # 全鸡
+                    #     shop_category_id =   # 店铺内类目
+                    #     category_id =   # 商品类目
+                    #     image_path = ''
+                    #     synchronize_KFC_goods(response_text, shop_category_id, category_id, image_path)
+
+
+
+
+kf_coupon_getDirs()
+
+
+
+
 
 
 

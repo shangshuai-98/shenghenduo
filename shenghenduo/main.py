@@ -7,33 +7,16 @@ from apscheduler.triggers.cron import CronTrigger
 from models import Item
 from script_tool.shangpinshangjia_v2 import get_goods_info
 from script_tool.celery_worker import scheduler
-from script_tool.ruixing_order import get_order, kf_get_coupon_goods, kf_check_main, update_goods_price, kf_ruixing_goods
+from script_tool.ruixing_order import get_order, kf_get_coupon_goods, kf_check_main, update_goods_price, kf_coupon_getDirs
 from script_tool.KFC_replace_order import select_stores
 
 app = FastAPI()
 
-# # 允许所有来源的跨域请求
-# app.add_middleware(
-#     CORSMiddleware,
-#     # 允许所有来源的跨域请求
-#     allow_origins=["*"],
-#     # 参数设置为True表示允许携带身份凭证，如cookies
-#     allow_credentials=True,
-#     # 表示允许所有HTTP方法的请求
-#     allow_methods=["*"],
-#     # 表示允许所有请求头
-#     allow_headers=["*"]
-# )
 
 
 @app.get("/")
 def read_root():
     return {"message": "wwwwww"}
-
-@app.post('/items/')
-def create_item(item: Item):
-    print(item.id)
-    return {"item_id": item.id, "item_name": item.name, "item_price": item.price}
 
 
 @app.get("/lxy/bottomMoney/{bottom_money_id}")
@@ -46,18 +29,19 @@ def get_test(bottom_money_id):
 # https://d.luffi.cn/#/?key=F12TlLyrFKa7q4tDMQ
 # https://luckin.hqyi.net/#/?code=aDWSvnTrVWYmBpNx7H
 # https://d.luffi.cn/#/?key=u45JcPg2inN7wY8QcN
-@app.post('/lxy/coffee/mealCode')
-def get_coffee_meal_code(data: dict):
-    # 914 915
-    print(data)
-    result = get_order(data.get('pay_on'))
-    if result:
-        return {"code":1, "msg": 'success', 'data': result}
-    return {"code":2, "msg": 'fail', 'data': result}
+# @app.post('/lxy/coffee/mealCode')
+# def get_coffee_meal_code(data: dict):
+#     # 914 915
+#     print(data)
+#     result = get_order(data.get('pay_on'))
+#     if result:
+#         return {"code":1, "msg": 'success', 'data': result}
+#     return {"code":2, "msg": 'fail', 'data': result}
 
 
 @app.get('/lxy/coffee/mealCode')
 def get_coffee_meal_code(pay_on, order_id):
+    # 快发平台优惠券兑换返回取餐码
     # print(pay_on)
     # print(order_id)
     params={'pay_on': pay_on, 'order_id': order_id}
@@ -90,42 +74,22 @@ def get_KFC_city_code(gbCityCode, keyword):
 async def startup_event():
     # print(os.getenv('GUNICORN_WORKER'))
     # if os.getenv('GUNICORN_WORKER') == 'primary':
+    # scheduler.add_job(
+    #     kf_check_main, 'interval', seconds=60*30
+    # )
     scheduler.add_job(
-        kf_check_main, 'interval', seconds=60*30
+        func=kf_coupon_getDirs,
+        trigger=CronTrigger(minute='25,55'),
+        id='kf_coupon_getDirs_job',  # 为任务设置一个唯一标识符
+        name='Update goods status',  # 为任务设置一个名称
     )
-    scheduler.add_job(
-        func=kf_ruixing_goods,
-        trigger=CronTrigger(minute='25,50'),
-        id='kf_ruixing_goods_job',  # 为任务设置一个唯一标识符
-        name='Update goods weigh',  # 为任务设置一个名称
-    )
-    scheduler.add_job(
-        func=update_goods_price,
-        trigger=CronTrigger(hour=1, minute=0),
-        id='update_goods_price_job',  # 为任务设置一个唯一标识符
-        name='Update goods price',  # 为任务设置一个名称
-    )
+    # scheduler.add_job(
+    #     func=update_goods_price,
+    #     trigger=CronTrigger(hour=1, minute=0),
+    #     id='update_goods_price_job',  # 为任务设置一个唯一标识符
+    #     name='Update goods price',  # 为任务设置一个名称
+    # )
     scheduler.start()
-
-
-@app.post('/lxy/taobao/messagetest')
-def handle_message(topic: str = Query(...), pub_time: int = Query(...), sign: str = Query(...), data: dict = Body(...)):
-    # print(topic)
-    # print(pub_time)
-    # print(sign)
-    print(data)
-    tid = data.get('tid')  # 主订单ID
-    oid = data.get('oid')  # 子订单ID
-    type = data.get('type')  # 交易类型
-    status = data.get('status')  # 交易状态
-    seller_nick = data.get('seller_nick')  # 卖家昵称
-    buyer_nick = data.get('buyer_nick')  # 买家昵称
-    buyer_open_uid = data.get('buyer_open_uid')  # 买家OpenUid
-    payment = data.get('payment')  # 实付金额
-
-
-
-    return {'code': 1000, 'data': '成功'}
 
 
 @app.post("/post")
